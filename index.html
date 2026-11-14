@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Life Residence 3D</title>
-<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/style.css?v=4">
 <script type="importmap">
 {
   "imports": {
@@ -85,6 +85,10 @@
   <main id="main" aria-label="Mapa 3D do empreendimento">
     <div class="err" id="err">Não foi possível carregar a maquete 3D neste aparelho. Use a aba Lista para consultar as unidades.</div>
     <button type="button" class="mapbtn" id="mapHome" aria-label="Voltar à vista geral">⤢ Vista geral</button>
+    <button type="button" class="mapbtn lzbtn" id="lazerBtn" aria-label="Tour das áreas de lazer">★ Lazer</button>
+    <div id="pins" aria-hidden="false"></div>
+    <div class="fcard" id="fcard" aria-hidden="true"></div>
+    <nav class="lzbar" id="lazerBar" aria-label="Áreas de lazer"></nav>
     <div class="hint" id="hint" aria-hidden="true"><span class="h-mouse">Arraste para girar · Scroll para zoom · Botão direito para mover · Clique numa janela</span><span class="h-touch">Arraste para girar · Pinça para zoom · Toque numa janela</span></div>
     <div class="compass" aria-hidden="true"><div id="north"></div></div>
     <div class="tip" id="tip" aria-hidden="true"><b id="tipCode"></b><span id="tipStatus"></span></div>
@@ -103,12 +107,15 @@
         <span class="badge" id="uBadge"></span>
         <div class="grid2" id="uGrid"></div>
         <div class="plan" id="uPlan"></div>
+        <div class="gal" id="uGal"></div>
         <div class="note" id="uNote"></div>
       </div>
       <div id="blockView" style="display:none">
         <h2 class="ut" id="bTitle"></h2>
         <div class="blk-list" id="bList"></div>
+        <div id="bUnits"></div>
         <div class="plan" id="bPlan"></div>
+        <div class="gal" id="bGal"></div>
         <div class="note">Planta do book (p.36). Clique numa janela para ver a unidade.</div>
       </div>
     </div>
@@ -120,6 +127,16 @@
   </aside>
 </div>
 
-<script type="module" src="js/app.js?v=3"></script>
+<div id="viewer" role="dialog" aria-modal="true" aria-label="Galeria de imagens" hidden>
+  <button type="button" class="vx" id="vClose" aria-label="Fechar">×</button>
+  <button type="button" class="vnav vprev" id="vPrev" aria-label="Imagem anterior">‹</button>
+  <figure>
+    <img id="vImg" alt="">
+    <figcaption><b id="vCap"></b><span id="vCount"></span></figcaption>
+  </figure>
+  <button type="button" class="vnav vnext" id="vNext" aria-label="Próxima imagem">›</button>
+</div>
+
+<script type="module" src="js/app.js?v=4"></script>
 </body>
 </html>

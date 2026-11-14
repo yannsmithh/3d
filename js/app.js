@@ -548,6 +548,21 @@ hlGroup.add(
 hlGroup.visible = false;
 scene.add(hlGroup);
 
+/* Faixa do andar inteiro (hover na fachada): dourada, como no vídeo de referência */
+const band = new THREE.Group();
+band.add(
+  new THREE.LineSegments(new THREE.EdgesGeometry(hlBox), new THREE.LineBasicMaterial({ color: 0xffe08a })),
+  new THREE.Mesh(hlBox, new THREE.MeshBasicMaterial({ color: 0xf2c94c, transparent: true, opacity: 0.32, depthWrite: false }))
+);
+band.visible = false;
+scene.add(band);
+function placeBand(n, f) {
+  const b = blockBy[n], H = b.o === 'H';
+  band.position.set(wx(b.px), (f - 1) * BH + BH / 2, wz(b.py));
+  band.scale.set(H ? HALF * 2 + 0.6 : WW + 0.6, BH - 0.1, H ? WW + 0.6 : HALF * 2 + 0.6);
+  band.visible = true;
+}
+
 /* ---- Árvores e palmeiras ---- */
 {
   const canopy = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), M(0xffffff, { roughness: 0.95 }), trees.length * 2);
@@ -787,13 +802,14 @@ function refresh() {
     `<div class="kpi"><b style="color:#1f7a44">${disp}</b><span>disponíveis no filtro</span></div>` +
     `<div class="kpi"><b>${N}</b><span>unidades no total</span></div>` +
     `<div class="kpi"><b>${BL.length}</b><span>blocos · 2 etapas</span></div>`;
+  hoverFloor = null; band.visible = false; fcard.style.display = 'none';
   if ($('pane-list').classList.contains('on')) renderList();
 }
 [fTyp, fFloor, fEtapa, fPrice, fAvail, fAdapt].forEach(el => el.addEventListener('input', refresh));
 fBlock.addEventListener('input', () => { refresh(); if (fBlock.value !== 'all') { focusBlock(+fBlock.value); showBlock(+fBlock.value); } });
 fLabels.addEventListener('input', () => { labelGroup.visible = fLabels.checked; });
-$('resetView').addEventListener('click', () => { clearCut(); homeView(true); });
-$('mapHome').addEventListener('click', () => { clearCut(); homeView(true); });
+$('resetView').addEventListener('click', () => { lazerOff(); clearCut(); homeView(true); });
+$('mapHome').addEventListener('click', () => { lazerOff(); clearCut(); homeView(true); });
 if (isMobile()) $('filtros').open = false;
 
 /* ---------- Painel direito ---------- */
@@ -834,6 +850,7 @@ function placeTip(un) {
 }
 
 function showUnit(un) {
+  lazerOff();
   selected = { kind: 'unit', un };
   openPanel(true); setTab('unit');
   $('blockView').style.display = 'none';
@@ -849,6 +866,7 @@ function showUnit(un) {
     `<div><span>Final</span><b>${String(un.u).padStart(2, '0')}${un.adapt ? ' · adaptável' : ''}</b></div>` +
     `<div><span>Valor (fictício)</span><b>${brl(un.price)}</b></div>`;
   $('uPlan').innerHTML = `<img src="${PLANTAS[un.typ === 'com' ? 'com' : 'sem']}" alt="Planta baixa da unidade ${TIPO[un.typ].toLowerCase()}: sala, cozinha, dois quartos e banheiro">`;
+  $('uGal').innerHTML = galHTML();
   $('uNote').textContent =
     (un.adapt ? 'Este final aparece na implantação como unidade com possibilidade de adaptação; o book não informa em quais andares. ' : '') +
     (un.typ === 'garden'
@@ -861,7 +879,8 @@ function showUnit(un) {
     flyTo(f.cx, (un.floor - 1) * BH, f.cz, Math.min(camera.position.distanceTo(controls.target), 110));
   }
 }
-function showBlock(n) {
+function showBlock(n, floor) {
+  lazerOff();
   selected = { kind: 'block', b: n };
   openPanel(true); setTab('unit');
   $('unitView').style.display = 'none';
@@ -869,7 +888,7 @@ function showBlock(n) {
   const b = blockBy[n], list = units.filter(x => x.block === n);
   const c = s => list.filter(x => x.status === s).length;
   const tipo = b.tipo === 'garden' ? 'Sem varanda, com garden no térreo' : b.tipo === 'com' ? 'Torre com varanda' : 'Torre sem varanda';
-  $('bTitle').textContent = `Bloco ${String(n).padStart(2, '0')}`;
+  $('bTitle').textContent = `Bloco ${String(n).padStart(2, '0')}` + (floor ? ` · ${floor}º andar` : '');
   $('bList').innerHTML =
     `Tipologia: <b>${tipo}</b><br>Etapa: <b>${b.etapa}ª</b><br>` +
     `Unidades: <b>${list.length}</b> (5 andares × 4 finais)<br>` +
@@ -879,7 +898,12 @@ function showBlock(n) {
     `<span style="color:#5f6b78">●</span> Vendidas: <b>${c('Vendido')}</b>`;
   const pk = b.tipo === 'com' ? 'com' : 'sem';
   $('bPlan').innerHTML = `<img src="${PLANTAS[pk]}" alt="Planta baixa da unidade ${TIPO[pk].toLowerCase()}: sala, cozinha, dois quartos e banheiro">`;
-  clearCut();
+  if (floor) {
+    setCut(n, floor);
+    const fl = units.filter(x => x.block === n && x.floor === floor);
+    $('bUnits').innerHTML = `<h3>Unidades do ${floor}º andar</h3>` + fl.map(rowHTML).join('');
+  } else { clearCut(); $('bUnits').innerHTML = ''; }
+  $('bGal').innerHTML = galHTML();
   highlight(null);
   if (isMobile() && !camGoal) focusBlock(n);
 }
@@ -898,17 +922,20 @@ function focusBlock(n) { const b = blockBy[n]; flyTo(wx(b.px), 6, wz(b.py), 95);
 function renderList() {
   const rows = units.filter(matches);
   $('listCount').textContent = `${rows.length} unidades com o filtro atual` + (rows.length > 300 ? ' (mostrando as 300 primeiras; refine o filtro)' : '');
-  $('listBody').innerHTML = rows.slice(0, 300).map(un =>
+  $('listBody').innerHTML = rows.slice(0, 300).map(rowHTML).join('');
+}
+function rowHTML(un) {
+  return (
     `<button type="button" class="lrow" data-i="${units.indexOf(un)}" aria-label="Apto ${un.code}, bloco ${un.block}, ${TIPO[un.typ]}, ${un.floor}º andar, ${un.status}, ${brl(un.price)}">` +
       `<span style="display:block"><b>Apto ${un.code}</b> <small>· Bloco ${String(un.block).padStart(2, '0')}</small><br><small>${TIPO[un.typ]} · ${un.floor}º andar${un.adapt ? ' · adaptável' : ''}</small></span>` +
       `<span style="display:block;text-align:right"><em style="color:${STATUS_COR[un.status]}">${un.status}</em><br><small>${brl(un.price)}</small></span>` +
     `</button>`
-  ).join('');
+  );
 }
-$('listBody').addEventListener('click', e => {
+[$('listBody'), $('bUnits')].forEach(el => el.addEventListener('click', e => {
   const row = e.target.closest('.lrow');
   if (row) focusUnit(units[+row.dataset.i]);
-});
+}));
 
 /* ---------- Mouse e toque ---------- */
 const ray = new THREE.Raycaster();
@@ -922,31 +949,200 @@ function castAt(e) {
   const w = ray.intersectObject(winMesh)[0];
   const b = ray.intersectObjects(blockMeshes)[0];
   if (w && (!b || w.distance < b.distance + 0.5)) return { un: units[winUnit[w.instanceId]] };
-  if (b) return { block: b.object.userData.block };
+  if (b) return { block: b.object.userData.block, floor: Math.min(FLOORS, Math.max(1, Math.floor(b.point.y / BH) + 1)) };
   return {};
 }
 const cv = renderer.domElement;
 cv.addEventListener('pointermove', e => {
-  if (e.pointerType !== 'mouse' || e.buttons) return;
-  const un = castAt(e).un || null;
-  cv.style.cursor = un ? 'pointer' : 'grab';
+  if (e.pointerType !== 'mouse' || e.buttons || lazer) return;
+  const hit = castAt(e), un = hit.un || null;
+  cv.style.cursor = un || hit.block ? 'pointer' : 'grab';
   if (un !== hovered) {
     hovered = un;
     if (un) highlight(un);
     else highlight(selected && selected.kind === 'unit' ? selected.un : null);
   }
+  setHoverFloor(!lazer && !un && hit.block ? { n: hit.block, f: hit.floor } : null);
 });
-cv.addEventListener('pointerleave', () => { hovered = null; highlight(selected && selected.kind === 'unit' ? selected.un : null); });
+cv.addEventListener('pointerleave', () => { hovered = null; setHoverFloor(null); highlight(selected && selected.kind === 'unit' ? selected.un : null); });
+
+/* Card do andar: bloco, andar, disponíveis e preço a partir de */
+const fcard = $('fcard');
+let hoverFloor = null;
+function floorStats(n, f) {
+  const list = units.filter(u => u.block === n && u.floor === f);
+  const disp = list.filter(u => u.status === 'Disponível' && matches(u));
+  return { list, disp, min: disp.length ? Math.min(...disp.map(u => u.price)) : null };
+}
+function setHoverFloor(h) {
+  if (!h) { if (hoverFloor) { hoverFloor = null; band.visible = false; fcard.style.display = 'none'; } return; }
+  if (hoverFloor && hoverFloor.n === h.n && hoverFloor.f === h.f) return;
+  hoverFloor = h;
+  placeBand(h.n, h.f);
+  const s = floorStats(h.n, h.f);
+  const tipos = [...new Set(s.list.map(u => TIPO[u.typ]))].join(' · ');
+  fcard.innerHTML =
+    `<div class="fh"><span class="fn">${h.f}<small>º</small></span><span class="fs${s.disp.length ? '' : ' no'}">${s.disp.length ? s.disp.length + (s.disp.length > 1 ? ' disponíveis' : ' disponível') : 'sem disponíveis'}</span></div>` +
+    `<div class="fl">Bloco ${String(h.n).padStart(2, '0')} · ${tipos}</div>` +
+    `<div class="fp">${s.min ? 'a partir de ' + brl(s.min) : '—'}</div>` +
+    `<div class="fc">Clique para ver o andar</div>`;
+}
+const fV = new THREE.Vector3();
+function placeFloorCard() {
+  const b = blockBy[hoverFloor.n];
+  fV.set(wx(b.px), (hoverFloor.f - 1) * BH + BH / 2, wz(b.py)).project(camera);
+  if (fV.z > 1) { fcard.style.display = 'none'; return; }
+  const w = main.clientWidth, h = main.clientHeight, cw = fcard.offsetWidth || 220, ch = fcard.offsetHeight || 120;
+  let x = (fV.x * 0.5 + 0.5) * w + 28, y = (-fV.y * 0.5 + 0.5) * h - ch / 2;
+  if (x + cw > w - 8) x = (fV.x * 0.5 + 0.5) * w - cw - 28;
+  fcard.style.left = Math.max(8, x) + 'px';
+  fcard.style.top = Math.min(Math.max(8, y), h - ch - 8) + 'px';
+  fcard.style.display = 'block';
+}
 cv.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY, t: performance.now() }; });
 cv.addEventListener('pointerup', e => { // só conta como clique/toque se não foi arrasto
   if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 8 || performance.now() - down.t > 600) { down = null; return; }
   down = null;
+  if (lazer) return;
+  setHoverFloor(null);
   const hit = castAt(e);
   if (hit.un) showUnit(hit.un);
-  else if (hit.block) showBlock(hit.block);
+  else if (hit.block) showBlock(hit.block, hit.floor);
   else closeAll();
 });
-addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+
+/* =====================================================================
+   VIEWER (tela cheia) e GALERIA do apartamento decorado
+   Fotos recortadas do book (perspectivas ilustradas).
+   ===================================================================== */
+const APTO = [
+  { src: 'img/apto/sala.jpg', cap: 'Sala de estar e jantar' },
+  { src: 'img/apto/cozinha.jpg', cap: 'Cozinha e área de serviço' },
+  { src: 'img/apto/quarto1.jpg', cap: 'Quarto' },
+  { src: 'img/apto/quarto2.jpg', cap: 'Quarto' }
+];
+const viewer = $('viewer');
+let vList = [], vi = 0, vFrom = null;
+function showV() {
+  const it = vList[vi];
+  $('vImg').src = it.src; $('vImg').alt = it.cap;
+  $('vCap').textContent = it.cap;
+  $('vCount').textContent = vList.length > 1 ? `${vi + 1} / ${vList.length}` : '';
+  $('vPrev').style.visibility = $('vNext').style.visibility = vList.length > 1 ? 'visible' : 'hidden';
+  const fig = viewer.querySelector('figure'); fig.style.animation = 'none'; void fig.offsetWidth; fig.style.animation = '';
+}
+function openViewer(list, i) {
+  vList = list; vi = i; vFrom = document.activeElement;
+  showV(); viewer.hidden = false; $('vClose').focus();
+}
+function closeViewer() { viewer.hidden = true; if (vFrom && vFrom.focus) vFrom.focus(); }
+const stepV = d => { vi = (vi + d + vList.length) % vList.length; showV(); };
+$('vClose').addEventListener('click', closeViewer);
+$('vPrev').addEventListener('click', () => stepV(-1));
+$('vNext').addEventListener('click', () => stepV(1));
+viewer.addEventListener('click', e => { if (e.target === viewer) closeViewer(); });
+function galHTML() {
+  return '<h3>Apartamento decorado</h3>' +
+    APTO.map((a, i) => `<button type="button" data-g="${i}" aria-label="Ampliar: ${a.cap}"><img src="${a.src}" alt="${a.cap}" loading="lazy"><span>${a.cap}</span></button>`).join('') +
+    '<div class="gnote">Perspectivas ilustradas do book.</div>';
+}
+document.addEventListener('click', e => { const b = e.target.closest('.gal button'); if (b) openViewer(APTO, +b.dataset.g); });
+
+/* =====================================================================
+   TOUR DO LAZER — a câmera voa para a área, pinos numerados aparecem
+   sobre a maquete e cada pino/chip abre a foto do ambiente.
+   Posições em pixels da implantação (mesmo sistema dos rótulos).
+   ===================================================================== */
+const AREAS = {
+  '01': { nome: 'Lazer 01', px: 365, py: 315, dist: 175 },
+  '03': { nome: 'Centro', px: 977, py: 545, dist: 150 },
+  '02': { nome: 'Lazer 02', px: 1745, py: 470, dist: 140 }
+};
+const LAZER = [
+  { a: '01', nome: 'Portaria', px: 338, py: 492, y: 7, img: 'portaria' },
+  { a: '01', nome: 'Salão de festas', px: 350, py: 372, y: 7, img: 'salao-festas' },
+  { a: '01', nome: 'Salão infantil', px: 362, py: 412, y: 6, img: 'salao-infantil' },
+  { a: '01', nome: 'Varanda gourmet', px: 373, py: 340, y: 5, img: 'varanda-gourmet' },
+  { a: '01', nome: 'Piscina', px: 355, py: 268, y: 3, img: 'piscina' },
+  { a: '01', nome: 'Espaço kids', px: 362, py: 186, y: 5, img: 'espaco-kids' },
+  { a: '01', nome: 'Futmesa', px: 432, py: 134, y: 3, img: 'futmesa' },
+  { a: '01', nome: 'Quiosque gourmet', px: 490, py: 150, y: 6, img: 'quiosque' },
+  { a: '03', nome: 'Mini market', px: 972, py: 510, y: 6, img: 'minimarket' },
+  { a: '03', nome: 'Coworking', px: 981, py: 583, y: 6, img: 'coworking' },
+  { a: '02', nome: 'Bicicletário', px: 1623, py: 356, y: 4, img: 'bicicletario' },
+  { a: '02', nome: 'Academia', px: 1636, py: 509, y: 8, img: 'academia' },
+  { a: '02', nome: 'Salão de jogos', px: 1635, py: 551, y: 8, img: 'salao-jogos' },
+  { a: '02', nome: 'Quadras de areia', px: 1764, py: 391, y: 4, img: 'quadras-areia' },
+  { a: '02', nome: 'Parque aventura', px: 1722, py: 447, y: 4, img: 'parque-aventura' },
+  { a: '02', nome: 'Quadra poliesportiva', px: 1750, py: 542, y: 5, img: 'quadra-poliesportiva' },
+  { a: '02', nome: 'Academia ao ar livre', px: 1775, py: 598, y: 4, img: 'academia-ar-livre' },
+  { a: '02', nome: 'Pista de cooper', px: 1855, py: 470, y: 3, img: 'pista-cooper' }
+];
+let lazer = null;
+const pinsEl = $('pins'), pV = new THREE.Vector3();
+LAZER.forEach((l, gi) => {
+  l.k = LAZER.filter((x, j) => j < gi && x.a === l.a).length;
+  l.v = new THREE.Vector3(wx(l.px), l.y, wz(l.py));
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'pin'; b.setAttribute('aria-label', l.nome);
+  b.innerHTML = `${l.k + 1}<span>${l.nome}</span>`;
+  b.addEventListener('click', () => openLazer(l.k));
+  pinsEl.appendChild(b); l.el = b;
+});
+function placePins() {
+  const w = main.clientWidth, h = main.clientHeight;
+  for (const l of LAZER) {
+    let show = false;
+    if (l.a === lazer) {
+      pV.copy(l.v).project(camera);
+      if (pV.z < 1) { show = true; l.el.style.left = ((pV.x * 0.5 + 0.5) * w) + 'px'; l.el.style.top = ((-pV.y * 0.5 + 0.5) * h) + 'px'; }
+    }
+    if (show !== l.shown) { l.el.style.display = show ? 'block' : 'none'; l.shown = show; }
+  }
+}
+function openLazer(k) {
+  openViewer(LAZER.filter(l => l.a === lazer).map(l => ({ src: `img/lazer/${l.img}.jpg`, cap: l.nome })), k);
+}
+function renderLazerBar() {
+  const items = LAZER.filter(l => l.a === lazer);
+  $('lazerBar').innerHTML =
+    `<div class="lzrow">${items.map((l, i) => `<button type="button" class="chip" data-k="${i}"><i>${i + 1}</i>${l.nome}</button>`).join('')}</div>` +
+    `<div class="lzrow">${Object.keys(AREAS).map(k => `<button type="button" class="chip area${k === lazer ? ' on' : ''}" data-a="${k}">${AREAS[k].nome}</button>`).join('')}<button type="button" class="chip out" data-out="1">Visão geral</button></div>`;
+}
+function lazerOn(a) {
+  closeAll();
+  lazer = a;
+  main.classList.add('lz');
+  $('lazerBtn').setAttribute('aria-pressed', 'true');
+  $('hint').classList.add('off');
+  const ar = AREAS[a], aspect = main.clientWidth / main.clientHeight;
+  const target = new THREE.Vector3(wx(ar.px), 0, wz(ar.py));
+  const dir = new THREE.Vector3(-0.15, 0.93, 0.36).normalize();
+  camGoal = { target, pos: target.clone().add(dir.multiplyScalar(ar.dist * (aspect < 0.95 ? 1.5 : 1))) };
+  renderLazerBar();
+}
+function lazerOff() {
+  if (!lazer) return;
+  lazer = null;
+  main.classList.remove('lz');
+  $('lazerBtn').setAttribute('aria-pressed', 'false');
+}
+$('lazerBtn').addEventListener('click', () => { if (lazer) { lazerOff(); homeView(true); } else lazerOn('01'); });
+$('lazerBar').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.k !== undefined) openLazer(+b.dataset.k);
+  else if (b.dataset.a) lazerOn(b.dataset.a);
+  else if (b.dataset.out) { lazerOff(); homeView(true); }
+});
+addEventListener('keydown', e => {
+  if (!viewer.hidden) {
+    if (e.key === 'Escape') closeViewer();
+    else if (e.key === 'ArrowLeft') stepV(-1);
+    else if (e.key === 'ArrowRight') stepV(1);
+    return;
+  }
+  if (e.key === 'Escape') { if (lazer) { lazerOff(); homeView(true); } else closeAll(); }
+});
 
 refresh();
 
@@ -967,7 +1163,9 @@ const clock = new THREE.Clock();
   const fx = controls.target.x - camera.position.x, fz = controls.target.z - camera.position.z, l = Math.hypot(fx, fz) || 1;
   const ang = Math.atan2(NORTE.x * (-fz / l) + NORTE.z * (fx / l), NORTE.x * (fx / l) + NORTE.z * (fz / l));
   north.style.transform = `rotate(${ang}rad)`;
-  areaLabels.visible = main.clientWidth >= 700 || camera.position.distanceTo(controls.target) < 230;
+  areaLabels.visible = !lazer && (main.clientWidth >= 700 || camera.position.distanceTo(controls.target) < 230);
+  if (hoverFloor) placeFloorCard();
+  placePins();
   const cur = hovered || (selected && selected.kind === 'unit' ? selected.un : null);
   if (cur) placeTip(cur); else tip.style.display = 'none';
   renderer.render(scene, camera);
