@@ -102,12 +102,14 @@ try {
   document.getElementById('err').style.display = 'flex';
   throw e;
 }
-renderer.setPixelRatio(Math.min(devicePixelRatio, isMobile() ? 1.75 : 2));
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 main.appendChild(renderer.domElement);
 renderer.domElement.setAttribute('role', 'img');
 renderer.domElement.setAttribute('aria-label', 'Maquete 3D do Life Residence. Use os filtros ou a aba Lista para encontrar unidades.');
 
+var dirty = true; // só redesenha o canvas quando algo mudou
+function wake() { dirty = true; }
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xcfe3f1);
 scene.fog = new THREE.Fog(0xcfe3f1, 700, 1600);
@@ -146,6 +148,7 @@ function resize() {
   renderer.setSize(w, h);
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
+  wake();
   // girou o aparelho e nada está selecionado: reenquadra
   const portrait = w / h < 0.95;
   if (lastAspectPortrait !== null && portrait !== lastAspectPortrait && !selected) homeView(true);
@@ -154,6 +157,7 @@ function resize() {
 new ResizeObserver(resize).observe(main);
 resize();
 homeView(false);
+controls.addEventListener('change', wake);
 controls.addEventListener('start', () => { camGoal = null; document.getElementById('hint').classList.add('off'); });
 
 scene.add(new THREE.HemisphereLight(0xf4f8ff, 0xc9c4b4, 2.1));
@@ -166,7 +170,7 @@ scene.add(sun);
    Sem camadas sobrepostas => sem z-fighting / cintilação.
    ===================================================================== */
 const GX0 = 195, GY0 = 60, GW = 1690, GH = 580;
-const TEXW = Math.min(isMobile() ? 3072 : 4096, renderer.capabilities.maxTextureSize);
+const TEXW = Math.min(3072, renderer.capabilities.maxTextureSize);
 const K = TEXW / GW;
 const gc = document.createElement('canvas');
 gc.width = TEXW; gc.height = Math.round(GH * K);
@@ -360,7 +364,7 @@ BL.forEach(b => {
 const insideSite = (x, y) => (x > 306 && x < 1612 && y > 94 && y < 598) && !(x < 350 && y < 190);
 const isOcc = (x, y, m) => occ.some(o => x > o[0] - m && x < o[2] + m && y > o[1] - m && y < o[3] + m);
 const trees = [];
-for (let t = 0; trees.length < 190 && t < 9000; t++) {
+for (let t = 0; trees.length < 120 && t < 9000; t++) {
   const x = 306 + rnd(t * 3 + 1) * 1306, y = 94 + rnd(t * 7 + 2) * 504;
   if (!insideSite(x, y) || isOcc(x, y, 5)) continue;
   if (trees.some(o => (o.x - x) ** 2 + (o.y - y) ** 2 < 15 * 15)) continue;
@@ -514,7 +518,8 @@ function showInst(mesh, i, on) {
   if (on) mesh.instanceMatrix.array.set(ORIG.get(mesh).subarray(i * 16, i * 16 + 16), i * 16);
   else mesh.setMatrixAt(i, ZERO);
 }
-function applyCut(n, k) { // k = último andar visível (FLOORS = prédio inteiro)
+function applyCut(n, k) {
+  wake(); // k = último andar visível (FLOORS = prédio inteiro)
   const p = blockParts[n], h = k * BH;
   p.wings.forEach(w => { w.scale.y = h / HT; w.position.y = h / 2; });
   p.roofs.forEach(r => { r.position.y = h + 0.175; });
@@ -601,7 +606,7 @@ function placeBand(n, f) {
 
 /* ---- Carros nas vagas ---- */
 {
-  const used = stalls.filter((s, i) => rnd(i * 13 + 4) < 0.42);
+  const used = stalls.filter((s, i) => rnd(i * 13 + 4) < 0.25);
   const body = new THREE.InstancedMesh(new THREE.BoxGeometry(4.1, 0.75, 1.75), M(0xffffff, { roughness: 0.35, metalness: 0.3 }), used.length);
   const cab = new THREE.InstancedMesh(new THREE.BoxGeometry(2.0, 0.55, 1.5), M(0x55616d, { roughness: 0.2 }), used.length);
   const cores = [0xe9eaec, 0x1d2b3f, 0xa3231c, 0x3c4149, 0xc9ced4, 0x8c9198, 0xf4f4f4, 0x2f5f8f];
@@ -786,6 +791,7 @@ function matches(un) {
   return true;
 }
 function refresh() {
+  wake();
   pVal.textContent = brl(+fPrice.value);
   const ativos = [fTyp, fFloor, fEtapa, fBlock].filter(x => x.value !== 'all').length
     + (+fPrice.value < +fPrice.max) + fAvail.checked + fAdapt.checked;
@@ -807,7 +813,8 @@ function refresh() {
 }
 [fTyp, fFloor, fEtapa, fPrice, fAvail, fAdapt].forEach(el => el.addEventListener('input', refresh));
 fBlock.addEventListener('input', () => { refresh(); if (fBlock.value !== 'all') { focusBlock(+fBlock.value); showBlock(+fBlock.value); } });
-fLabels.addEventListener('input', () => { labelGroup.visible = fLabels.checked; });
+labelGroup.visible = fLabels.checked;
+fLabels.addEventListener('input', () => { labelGroup.visible = fLabels.checked; wake(); });
 $('resetView').addEventListener('click', () => { lazerOff(); clearCut(); homeView(true); });
 $('mapHome').addEventListener('click', () => { lazerOff(); clearCut(); homeView(true); });
 if (isMobile()) $('filtros').open = false;
@@ -829,6 +836,7 @@ function closeAll() { selected = null; highlight(null); clearCut(); openPanel(fa
 $('closePanel').addEventListener('click', closeAll);
 
 function highlight(un) {
+  wake();
   if (!un) { hlGroup.visible = false; return; }
   const f = unitFrame(un);
   hlGroup.position.set(f.cx, (un.floor - 1) * BH + BH / 2, f.cz);
@@ -975,6 +983,7 @@ function floorStats(n, f) {
   return { list, disp, min: disp.length ? Math.min(...disp.map(u => u.price)) : null };
 }
 function setHoverFloor(h) {
+  wake();
   if (!h) { if (hoverFloor) { hoverFloor = null; band.visible = false; fcard.style.display = 'none'; } return; }
   if (hoverFloor && hoverFloor.n === h.n && hoverFloor.f === h.f) return;
   hoverFloor = h;
@@ -1049,39 +1058,46 @@ function galHTML() {
 document.addEventListener('click', e => { const b = e.target.closest('.gal button'); if (b) openViewer(APTO, +b.dataset.g); });
 
 /* =====================================================================
-   TOUR DO LAZER — a câmera voa para a área, pinos numerados aparecem
-   sobre a maquete e cada pino/chip abre a foto do ambiente.
-   Posições em pixels da implantação (mesmo sistema dos rótulos).
+   TOUR DO LAZER
+   - Lazer 01 e 02: render aéreo do book como painel inclinado em 3D
+     (arraste gira, roda/pinça dá zoom). `plan` = posição do pino na imagem (fração x, y).
+   - Centro: a própria maquete, com a câmera voando até lá.
+   Cada pino/chip abre a foto do ambiente em tela cheia.
    ===================================================================== */
 const AREAS = {
-  '01': { nome: 'Lazer 01', px: 365, py: 315, dist: 175 },
-  '03': { nome: 'Centro', px: 977, py: 545, dist: 150 },
-  '02': { nome: 'Lazer 02', px: 1745, py: 470, dist: 140 }
+  '01': { nome: 'Lazer 01', plano: 'img/plano/lazer01.jpg' },
+  '02': { nome: 'Lazer 02', plano: 'img/plano/lazer02.jpg' },
+  '03': { nome: 'Centro', px: 977, py: 545, dist: 150 }
 };
 const LAZER = [
-  { a: '01', nome: 'Portaria', px: 338, py: 492, y: 7, img: 'portaria' },
-  { a: '01', nome: 'Salão de festas', px: 350, py: 372, y: 7, img: 'salao-festas' },
-  { a: '01', nome: 'Salão infantil', px: 362, py: 412, y: 6, img: 'salao-infantil' },
-  { a: '01', nome: 'Varanda gourmet', px: 373, py: 340, y: 5, img: 'varanda-gourmet' },
-  { a: '01', nome: 'Piscina', px: 355, py: 268, y: 3, img: 'piscina' },
-  { a: '01', nome: 'Espaço kids', px: 362, py: 186, y: 5, img: 'espaco-kids' },
-  { a: '01', nome: 'Futmesa', px: 432, py: 134, y: 3, img: 'futmesa' },
-  { a: '01', nome: 'Quiosque gourmet', px: 490, py: 150, y: 6, img: 'quiosque' },
-  { a: '03', nome: 'Mini market', px: 972, py: 510, y: 6, img: 'minimarket' },
-  { a: '03', nome: 'Coworking', px: 981, py: 583, y: 6, img: 'coworking' },
-  { a: '02', nome: 'Bicicletário', px: 1623, py: 356, y: 4, img: 'bicicletario' },
-  { a: '02', nome: 'Academia', px: 1636, py: 509, y: 8, img: 'academia' },
-  { a: '02', nome: 'Salão de jogos', px: 1635, py: 551, y: 8, img: 'salao-jogos' },
-  { a: '02', nome: 'Quadras de areia', px: 1764, py: 391, y: 4, img: 'quadras-areia' },
-  { a: '02', nome: 'Parque aventura', px: 1722, py: 447, y: 4, img: 'parque-aventura' },
-  { a: '02', nome: 'Quadra poliesportiva', px: 1750, py: 542, y: 5, img: 'quadra-poliesportiva' },
-  { a: '02', nome: 'Academia ao ar livre', px: 1775, py: 598, y: 4, img: 'academia-ar-livre' },
-  { a: '02', nome: 'Pista de cooper', px: 1855, py: 470, y: 3, img: 'pista-cooper' }
+  { a: '01', nome: 'Portaria', img: 'portaria', plan: [0.06, 0.51] },
+  { a: '01', nome: 'Salão infantil', img: 'salao-infantil', plan: [0.177, 0.30] },
+  { a: '01', nome: 'Salão de festas', img: 'salao-festas', plan: [0.333, 0.292] },
+  { a: '01', nome: 'Varanda gourmet', img: 'varanda-gourmet', plan: [0.418, 0.30] },
+  { a: '01', nome: 'Piscina', img: 'piscina', plan: [0.565, 0.146] },
+  { a: '01', nome: 'Espaço kids', img: 'espaco-kids', plan: [0.671, 0.089] },
+  { a: '01', nome: 'Futmesa', img: 'futmesa', plan: [0.817, 0.049] },
+  { a: '01', nome: 'Quiosque gourmet', img: 'quiosque', plan: [0.917, 0.146] },
+  { a: '02', nome: 'Pista de cooper', img: 'pista-cooper', plan: [0.202, 0.603] },
+  { a: '02', nome: 'Bicicletário', img: 'bicicletario', plan: [0.235, 0.838] },
+  { a: '02', nome: 'Quadras de areia', img: 'quadras-areia', plan: [0.277, 0.354] },
+  { a: '02', nome: 'Academia ao ar livre', img: 'academia-ar-livre', plan: [0.514, 0.049] },
+  { a: '02', nome: 'Parque aventura', img: 'parque-aventura', plan: [0.507, 0.335] },
+  { a: '02', nome: 'Quadra poliesportiva', img: 'quadra-poliesportiva', plan: [0.608, 0.174] },
+  { a: '02', nome: 'Lavanderia', img: 'lavanderia', plan: [0.653, 0.335] },
+  { a: '02', nome: 'Brinquedoteca', img: 'brinquedoteca', plan: [0.743, 0.262] },
+  { a: '02', nome: 'Academia', img: 'academia', plan: [0.766, 0.403] },
+  { a: '02', nome: 'Salão de jogos', img: 'salao-jogos', plan: [0.882, 0.331] },
+  { a: '03', nome: 'Mini market', img: 'minimarket', px: 972, py: 510, y: 6 },
+  { a: '03', nome: 'Coworking', img: 'coworking', px: 981, py: 583, y: 6 }
 ];
 let lazer = null;
 const pinsEl = $('pins'), pV = new THREE.Vector3();
-LAZER.forEach((l, gi) => {
-  l.k = LAZER.filter((x, j) => j < gi && x.a === l.a).length;
+const planEl = $('plan3d'), panel = $('panel'), planPins = $('planPins');
+const itemsOf = a => LAZER.filter(l => l.a === a);
+LAZER.forEach(l => { // pinos da maquete (só o Centro)
+  if (l.px === undefined) return;
+  l.k = itemsOf(l.a).indexOf(l);
   l.v = new THREE.Vector3(wx(l.px), l.y, wz(l.py));
   const b = document.createElement('button');
   b.type = 'button'; b.className = 'pin'; b.setAttribute('aria-label', l.nome);
@@ -1090,42 +1106,92 @@ LAZER.forEach((l, gi) => {
   pinsEl.appendChild(b); l.el = b;
 });
 function placePins() {
+  if (!lazer || AREAS[lazer].plano) return;
   const w = main.clientWidth, h = main.clientHeight;
-  for (const l of LAZER) {
-    let show = false;
-    if (l.a === lazer) {
-      pV.copy(l.v).project(camera);
-      if (pV.z < 1) { show = true; l.el.style.left = ((pV.x * 0.5 + 0.5) * w) + 'px'; l.el.style.top = ((-pV.y * 0.5 + 0.5) * h) + 'px'; }
-    }
+  for (const l of itemsOf(lazer)) {
+    pV.copy(l.v).project(camera);
+    const show = pV.z < 1;
+    if (show) { l.el.style.left = ((pV.x * 0.5 + 0.5) * w) + 'px'; l.el.style.top = ((-pV.y * 0.5 + 0.5) * h) + 'px'; }
     if (show !== l.shown) { l.el.style.display = show ? 'block' : 'none'; l.shown = show; }
   }
 }
+function hideMapPins() { for (const l of LAZER) if (l.el && l.shown) { l.el.style.display = 'none'; l.shown = false; } }
 function openLazer(k) {
-  openViewer(LAZER.filter(l => l.a === lazer).map(l => ({ src: `img/lazer/${l.img}.jpg`, cap: l.nome })), k);
+  openViewer(itemsOf(lazer).map(l => ({ src: `img/lazer/${l.img}.jpg`, cap: l.nome })), k);
 }
 function renderLazerBar() {
-  const items = LAZER.filter(l => l.a === lazer);
   $('lazerBar').innerHTML =
-    `<div class="lzrow">${items.map((l, i) => `<button type="button" class="chip" data-k="${i}"><i>${i + 1}</i>${l.nome}</button>`).join('')}</div>` +
+    `<div class="lzrow">${itemsOf(lazer).map((l, i) => `<button type="button" class="chip" data-k="${i}"><i>${i + 1}</i>${l.nome}</button>`).join('')}</div>` +
     `<div class="lzrow">${Object.keys(AREAS).map(k => `<button type="button" class="chip area${k === lazer ? ' on' : ''}" data-a="${k}">${AREAS[k].nome}</button>`).join('')}<button type="button" class="chip out" data-out="1">Visão geral</button></div>`;
 }
+
+/* ---- painel inclinado ---- */
+const ps = { rz: -8, rx: 42, s: 1 };
+function applyPlan() {
+  panel.style.setProperty('--rz', ps.rz + 'deg');
+  panel.style.setProperty('--rx', ps.rx + 'deg');
+  panel.style.setProperty('--s', ps.s);
+  panel.style.transform = `rotateX(${ps.rx}deg) rotateZ(${ps.rz}deg) scale(${ps.s})`;
+}
+function showPlan(a) {
+  const items = itemsOf(a);
+  $('planImg').src = AREAS[a].plano;
+  $('planImg').alt = `Render aéreo do ${AREAS[a].nome}`;
+  planPins.innerHTML = items.map((l, i) =>
+    `<button type="button" class="pin pp" data-k="${i}" style="left:${l.plan[0] * 100}%;top:${l.plan[1] * 100}%" aria-label="${l.nome}">${i + 1}<span>${l.nome}</span></button>`).join('');
+  Object.assign(ps, { rz: -8, rx: 42, s: 1 });
+  applyPlan();
+}
+let drag = null, dragMoved = false;
+const ptrs = new Map();
+planEl.addEventListener('pointerdown', e => {
+  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  dragMoved = false;
+  drag = { x: e.clientX, y: e.clientY, d: ptrs.size === 2 ? pinchDist() : 0, s: ps.s };
+});
+addEventListener('pointermove', e => {
+  if (!ptrs.has(e.pointerId)) return;
+  const p = ptrs.get(e.pointerId), dx = e.clientX - p.x, dy = e.clientY - p.y;
+  p.x = e.clientX; p.y = e.clientY;
+  if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 6) dragMoved = true;
+  if (ptrs.size === 2) { if (drag.d) ps.s = Math.min(2.8, Math.max(0.7, drag.s * pinchDist() / drag.d)); }
+  else { ps.rz += dx * 0.35; ps.rx = Math.min(72, Math.max(12, ps.rx - dy * 0.25)); }
+  applyPlan();
+});
+const endPtr = e => { ptrs.delete(e.pointerId); if (!ptrs.size) setTimeout(() => { dragMoved = false; }, 0); else drag = { x: 0, y: 0, d: 0, s: ps.s }; };
+addEventListener('pointerup', endPtr); addEventListener('pointercancel', endPtr);
+function pinchDist() { const [a, b] = [...ptrs.values()]; return Math.hypot(a.x - b.x, a.y - b.y); }
+planEl.addEventListener('wheel', e => { e.preventDefault(); ps.s = Math.min(2.8, Math.max(0.7, ps.s * Math.exp(-e.deltaY * 0.0012))); applyPlan(); }, { passive: false });
+planPins.addEventListener('click', e => {
+  const b = e.target.closest('.pin'); if (!b || dragMoved) return;
+  openLazer(+b.dataset.k);
+});
+
 function lazerOn(a) {
   closeAll();
   lazer = a;
-  main.classList.add('lz');
+  const plano = !!AREAS[a].plano;
+  main.classList.add('lz'); main.classList.toggle('plan', plano);
   $('lazerBtn').setAttribute('aria-pressed', 'true');
   $('hint').classList.add('off');
-  const ar = AREAS[a], aspect = main.clientWidth / main.clientHeight;
-  const target = new THREE.Vector3(wx(ar.px), 0, wz(ar.py));
-  const dir = new THREE.Vector3(-0.15, 0.93, 0.36).normalize();
-  camGoal = { target, pos: target.clone().add(dir.multiplyScalar(ar.dist * (aspect < 0.95 ? 1.5 : 1))) };
+  hideMapPins();
+  if (plano) showPlan(a);
+  else {
+    const ar = AREAS[a], aspect = main.clientWidth / main.clientHeight;
+    const target = new THREE.Vector3(wx(ar.px), 0, wz(ar.py));
+    const dir = new THREE.Vector3(-0.15, 0.93, 0.36).normalize();
+    camGoal = { target, pos: target.clone().add(dir.multiplyScalar(ar.dist * (aspect < 0.95 ? 1.5 : 1))) };
+  }
   renderLazerBar();
+  wake();
 }
 function lazerOff() {
   if (!lazer) return;
   lazer = null;
-  main.classList.remove('lz');
+  main.classList.remove('lz', 'plan');
   $('lazerBtn').setAttribute('aria-pressed', 'false');
+  hideMapPins();
+  wake();
 }
 $('lazerBtn').addEventListener('click', () => { if (lazer) { lazerOff(); homeView(true); } else lazerOn('01'); });
 $('lazerBar').addEventListener('click', e => {
@@ -1158,6 +1224,7 @@ const clock = new THREE.Clock();
     camera.position.lerp(camGoal.pos, k);
     controls.target.lerp(camGoal.target, k);
     if (camera.position.distanceTo(camGoal.pos) < 0.4) camGoal = null;
+    wake();
   }
   controls.update();
   const fx = controls.target.x - camera.position.x, fz = controls.target.z - camera.position.z, l = Math.hypot(fx, fz) || 1;
@@ -1168,5 +1235,5 @@ const clock = new THREE.Clock();
   placePins();
   const cur = hovered || (selected && selected.kind === 'unit' ? selected.un : null);
   if (cur) placeTip(cur); else tip.style.display = 'none';
-  renderer.render(scene, camera);
+  if (dirty && !(lazer && AREAS[lazer].plano)) { dirty = false; renderer.render(scene, camera); }
 })();

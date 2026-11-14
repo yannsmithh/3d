@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Life Residence 3D</title>
-<link rel="stylesheet" href="css/style.css?v=4">
+<link rel="stylesheet" href="css/style.css?v=6">
 <script type="importmap">
 {
   "imports": {
@@ -23,7 +23,7 @@
       <div class="sub">L Marquezzo · Parque Ipê · Feira de Santana/BA</div>
     </div></div>
 
-    <details class="filters" id="filtros" open>
+    <details class="filters" id="filtros">
       <summary>Filtros <span id="filtroResumo"></span></summary>
     <label class="field">Tipologia
       <select id="fTyp">
@@ -64,7 +64,7 @@
 
     <label class="check"><input type="checkbox" id="fAvail"> Só disponíveis</label>
     <label class="check"><input type="checkbox" id="fAdapt"> Só finais com possibilidade de adaptação</label>
-    <label class="check"><input type="checkbox" id="fLabels" checked> Nomes das áreas e blocos</label>
+    <label class="check"><input type="checkbox" id="fLabels"> Nomes das áreas e blocos</label>
 
     </details>
 
@@ -86,6 +86,10 @@
     <div class="err" id="err">Não foi possível carregar a maquete 3D neste aparelho. Use a aba Lista para consultar as unidades.</div>
     <button type="button" class="mapbtn" id="mapHome" aria-label="Voltar à vista geral">⤢ Vista geral</button>
     <button type="button" class="mapbtn lzbtn" id="lazerBtn" aria-label="Tour das áreas de lazer">★ Lazer</button>
+    <div class="plan3d" id="plan3d" aria-label="Planta ilustrada do lazer">
+      <div id="panel"><img id="planImg" alt="" draggable="false"><div id="planPins"></div></div>
+      <div class="planhint"><span class="h-mouse">Arraste para girar · Scroll para zoom</span><span class="h-touch">Arraste para girar · Pinça para zoom</span></div>
+    </div>
     <div id="pins" aria-hidden="false"></div>
     <div class="fcard" id="fcard" aria-hidden="true"></div>
     <nav class="lzbar" id="lazerBar" aria-label="Áreas de lazer"></nav>
@@ -137,6 +141,6 @@
   <button type="button" class="vnav vnext" id="vNext" aria-label="Próxima imagem">›</button>
 </div>
 
-<script type="module" src="js/app.js?v=4"></script>
+<script type="module" src="js/app.js?v=6"></script>
 </body>
 </html>
