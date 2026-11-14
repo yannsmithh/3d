@@ -856,6 +856,8 @@ function showBlock(n) {
     `<span style="color:#1f7a44">●</span> Disponíveis: <b>${c('Disponível')}</b><br>` +
     `<span style="color:#9a6a10">●</span> Reservadas: <b>${c('Reservado')}</b><br>` +
     `<span style="color:#5f6b78">●</span> Vendidas: <b>${c('Vendido')}</b>`;
+  const pk = b.tipo === 'com' ? 'com' : 'sem';
+  $('bPlan').innerHTML = `<img src="${PLANTAS[pk]}" alt="Planta baixa da unidade ${TIPO[pk].toLowerCase()}: sala, cozinha, dois quartos e banheiro">`;
   highlight(null);
   if (isMobile() && !camGoal) focusBlock(n);
 }
