@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Life Residence 3D</title>
-<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/style.css?v=3">
 <script type="importmap">
 {
   "imports": {
@@ -85,7 +85,6 @@
   <main id="main" aria-label="Mapa 3D do empreendimento">
     <div class="err" id="err">Não foi possível carregar a maquete 3D neste aparelho. Use a aba Lista para consultar as unidades.</div>
     <button type="button" class="mapbtn" id="mapHome" aria-label="Voltar à vista geral">⤢ Vista geral</button>
-    <button type="button" class="mapbtn" id="mapLocal" aria-label="Ver localização no mapa">📍 Localização</button>
     <div class="hint" id="hint" aria-hidden="true"><span class="h-mouse">Arraste para girar · Scroll para zoom · Botão direito para mover · Clique numa janela</span><span class="h-touch">Arraste para girar · Pinça para zoom · Toque numa janela</span></div>
     <div class="compass" aria-hidden="true"><div id="north"></div></div>
     <div class="tip" id="tip" aria-hidden="true"><b id="tipCode"></b><span id="tipStatus"></span></div>
@@ -96,7 +95,6 @@
     <div class="tabs" role="tablist">
       <button class="on" role="tab" id="tab-unit" aria-selected="true" aria-controls="pane-unit" data-tab="unit">Unidade</button>
       <button role="tab" id="tab-list" aria-selected="false" aria-controls="pane-list" data-tab="list">Lista</button>
-      <button role="tab" id="tab-map" aria-selected="false" aria-controls="pane-map" data-tab="map">Localização</button>
     </div>
 
     <div class="pane on" id="pane-unit" role="tabpanel" aria-labelledby="tab-unit">
@@ -119,20 +117,9 @@
       <div class="lcount" id="listCount"></div>
       <div id="listBody"></div>
     </div>
-
-    <div class="pane" id="pane-map" role="tabpanel" aria-labelledby="tab-map">
-      <h2 class="ut">Localização</h2>
-      <p class="note" id="mapAddr"></p>
-      <div class="gmap"><iframe id="mapFrame" title="Mapa da localização do Life Residence" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>
-      <div class="maplinks">
-        <a class="btn" id="mapOpen" target="_blank" rel="noopener">Abrir no Google Maps</a>
-        <a class="btn" id="mapRoute" target="_blank" rel="noopener">Como chegar</a>
-      </div>
-      <p class="note">Próximo à Av. Fraga Maia, Feira de Santana/BA.</p>
-    </div>
   </aside>
 </div>
 
-<script type="module" src="js/app.js?v=2"></script>
+<script type="module" src="js/app.js?v=3"></script>
 </body>
 </html>

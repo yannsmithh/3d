@@ -439,18 +439,20 @@ function fence(x0, y0, x1, y1, h) { // alambrado: tela translúcida + postes
 
 /* ---- Blocos ---- */
 const blockMeshes = [];
+const blockParts = {}; // peças de cada bloco, para "cortar" o prédio num andar
 const mBase = M(0x6f7379);
 for (const b of BL) {
   const bx = wx(b.px), bz = wz(b.py), m = CORE / 2 + WL / 2, H = b.o === 'H';
+  const parts = blockParts[b.n] = { wings: [], roofs: [], win: [], bal: [], pan: [] };
   for (const s of [-1, 1]) {
     const wing = box(H ? bx + s * m : bx, H ? bz : bz + s * m, H ? WL : WW, H ? WW : WL, HT, mWall);
-    wing.userData.block = b.n; blockMeshes.push(wing);
-    box(wing.position.x, wing.position.z, (H ? WL : WW) + 0.5, (H ? WW : WL) + 0.5, 0.35, mRoof, HT);
+    wing.userData.block = b.n; blockMeshes.push(wing); parts.wings.push(wing);
+    parts.roofs.push(box(wing.position.x, wing.position.z, (H ? WL : WW) + 0.5, (H ? WW : WL) + 0.5, 0.35, mRoof, HT));
     box(wing.position.x, wing.position.z, (H ? WL : WW) + 0.12, (H ? WW : WL) + 0.12, 0.5, mBase, 0);
   }
   const core = box(bx, bz, H ? CORE + 0.2 : 6.2, H ? 6.2 : CORE + 0.2, HT + 1.4, mCore);
-  core.userData.block = b.n; blockMeshes.push(core);
-  box(bx, bz, 2.4, 2.4, 1.6, mWhite, HT + 1.4); // reservatório
+  core.userData.block = b.n; blockMeshes.push(core); parts.core = core;
+  parts.res = box(bx, bz, 2.4, 2.4, 1.6, mWhite, HT + 1.4); // reservatório
 }
 
 /* ---- Janelas, esquadrias, painéis e varandas (instanciados) ---- */
@@ -479,11 +481,11 @@ units.forEach((un, ui) => {
   // fachada de topo da ala: sala (janela larga ou porta da varanda)
   const ew = com ? 2.4 : 2.6, eh = com ? 2.1 : 1.45, ey = y0 + (com ? 1.25 : 1.65);
   putPlane(frameMesh, wi, f.end, 0.05, 0, ey, ew + 0.3, eh + 0.3);
-  putPlane(winMesh, wi, f.end, 0.09, 0, ey, ew, eh); winUnit[wi++] = ui;
+  putPlane(winMesh, wi, f.end, 0.09, 0, ey, ew, eh); blockParts[un.block].win.push(wi); winUnit[wi++] = ui;
   // fachada lateral: dois quartos
   for (const a of [-2.1, 2.1]) {
     putPlane(frameMesh, wi, f.side, 0.05, a, y0 + 1.7, 1.6, 1.5);
-    putPlane(winMesh, wi, f.side, 0.09, a, y0 + 1.7, 1.3, 1.2); winUnit[wi++] = ui;
+    putPlane(winMesh, wi, f.side, 0.09, a, y0 + 1.7, 1.3, 1.2); blockParts[un.block].win.push(wi); winUnit[wi++] = ui;
   }
   if (com) {
     dummy.scale.set(1, 1, 1);
@@ -491,18 +493,50 @@ units.forEach((un, ui) => {
     dummy.position.set(f.end.x + f.end.nx * 0.62, y0 + 0.08, f.end.z + f.end.nz * 0.62); dummy.updateMatrix();
     balMesh.setMatrixAt(bi, dummy.matrix);
     dummy.position.set(f.end.x + f.end.nx * 1.2, y0 + 0.66, f.end.z + f.end.nz * 1.2); dummy.updateMatrix();
-    guardMesh.setMatrixAt(bi++, dummy.matrix);
+    blockParts[un.block].bal.push([bi, un.floor]); guardMesh.setMatrixAt(bi++, dummy.matrix);
   }
 });
 let pi = 0;
 BL.forEach(b => { // painéis escuros verticais (fachada em dois tons, como no book p.33)
   for (let q = 0; q < 4; q++) {
     const f = unitFrame({ block: b.n, q });
+    blockParts[b.n].pan.push([pi, q]);
     putPlane(panelMesh, pi++, f.side, 0.02, 0, HT / 2 + 0.25, 6.6, HT - 0.5);
     putPlane(panelMesh, pi++, f.end, 0.02, 0, HT / 2 + 0.25, 3.4, HT - 0.5);
   }
 });
 [winMesh, frameMesh, panelMesh, balMesh, guardMesh].forEach(m => { m.instanceMatrix.needsUpdate = true; scene.add(m); });
+
+/* ---- Corte por andar: ao clicar numa unidade, o bloco mostra só até o andar dela ---- */
+const ORIG = new Map([winMesh, frameMesh, balMesh, guardMesh].map(m => [m, m.instanceMatrix.array.slice()]));
+const ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
+function showInst(mesh, i, on) {
+  if (on) mesh.instanceMatrix.array.set(ORIG.get(mesh).subarray(i * 16, i * 16 + 16), i * 16);
+  else mesh.setMatrixAt(i, ZERO);
+}
+function applyCut(n, k) { // k = último andar visível (FLOORS = prédio inteiro)
+  const p = blockParts[n], h = k * BH;
+  p.wings.forEach(w => { w.scale.y = h / HT; w.position.y = h / 2; });
+  p.roofs.forEach(r => { r.position.y = h + 0.175; });
+  p.core.scale.y = (h + 1.4) / (HT + 1.4); p.core.position.y = (h + 1.4) / 2;
+  p.res.position.y = h + 1.4 + 0.8;
+  if (p.label) p.label.position.y = h + 5.5;
+  p.win.forEach(i => { const on = units[winUnit[i]].floor <= k; showInst(winMesh, i, on); showInst(frameMesh, i, on); });
+  p.bal.forEach(([i, f]) => { const on = f <= k; showInst(balMesh, i, on); showInst(guardMesh, i, on); });
+  p.pan.forEach(([i, q]) => {
+    const f = unitFrame({ block: n, q });
+    putPlane(panelMesh, i, f.side, 0.02, 0, h / 2 + 0.25, 6.6, h - 0.5);
+    putPlane(panelMesh, i + 1, f.end, 0.02, 0, h / 2 + 0.25, 3.4, h - 0.5);
+  });
+  [winMesh, frameMesh, panelMesh, balMesh, guardMesh].forEach(m => { m.instanceMatrix.needsUpdate = true; });
+}
+let cut = null;
+function setCut(n, k) {
+  if (cut && cut.n !== n) applyCut(cut.n, FLOORS);
+  applyCut(n, k);
+  cut = k < FLOORS ? { n, k } : null;
+}
+function clearCut() { if (cut) { applyCut(cut.n, FLOORS); cut = null; } }
 
 /* Destaque da unidade: contorno verde no volume do apartamento */
 const hlGroup = new THREE.Group();
@@ -713,7 +747,7 @@ BL.forEach(b => { // número do bloco, como na implantação
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false, sizeAttenuation: false }));
   s.scale.set(0.021, 0.021, 1); s.position.set(wx(b.px), HT + 5.5, wz(b.py)); s.renderOrder = 5;
-  labelGroup.add(s);
+  labelGroup.add(s); blockParts[b.n].label = s;
 });
 
 /* ---------- Cores das janelas ---------- */
@@ -758,8 +792,8 @@ function refresh() {
 [fTyp, fFloor, fEtapa, fPrice, fAvail, fAdapt].forEach(el => el.addEventListener('input', refresh));
 fBlock.addEventListener('input', () => { refresh(); if (fBlock.value !== 'all') { focusBlock(+fBlock.value); showBlock(+fBlock.value); } });
 fLabels.addEventListener('input', () => { labelGroup.visible = fLabels.checked; });
-$('resetView').addEventListener('click', () => homeView(true));
-$('mapHome').addEventListener('click', () => homeView(true));
+$('resetView').addEventListener('click', () => { clearCut(); homeView(true); });
+$('mapHome').addEventListener('click', () => { clearCut(); homeView(true); });
 if (isMobile()) $('filtros').open = false;
 
 /* ---------- Painel direito ---------- */
@@ -768,28 +802,14 @@ function setTab(name) {
   document.querySelectorAll('.tabs button').forEach(b => { const on = b.dataset.tab === name; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
   $('pane-unit').classList.toggle('on', name === 'unit');
   $('pane-list').classList.toggle('on', name === 'list');
-  $('pane-map').classList.toggle('on', name === 'map');
   if (name === 'list') renderList();
-  if (name === 'map') loadMap();
 }
 
-/* ---------- Localização (Google Maps) ----------
-   Endereço tirado do book (p.2): Av. Rubens Francisco Dias, junto à Av. Fraga Maia. */
-const ENDERECO = 'Av. Rubens Francisco Dias, Feira de Santana - BA';
-const MAPS_Q = encodeURIComponent(ENDERECO);
-$('mapAddr').textContent = ENDERECO;
-$('mapOpen').href = `https://www.google.com/maps/search/?api=1&query=${MAPS_Q}`;
-$('mapRoute').href = `https://www.google.com/maps/dir/?api=1&destination=${MAPS_Q}`;
-function loadMap() { // só carrega o iframe quando a aba é aberta
-  const f = $('mapFrame');
-  if (!f.src) f.src = `https://www.google.com/maps?q=${MAPS_Q}&z=15&output=embed`;
-}
-$('mapLocal').addEventListener('click', () => { openPanel(true); setTab('map'); });
 document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 function openPanel(open) {
   $('layout').classList.toggle('show', open);
 }
-function closeAll() { selected = null; highlight(null); openPanel(false); }
+function closeAll() { selected = null; highlight(null); clearCut(); openPanel(false); }
 $('closePanel').addEventListener('click', closeAll);
 
 function highlight(un) {
@@ -834,6 +854,7 @@ function showUnit(un) {
     (un.typ === 'garden'
       ? 'Planta do book (p.36) da unidade sem varanda. A área do garden não tem planta no material.'
       : 'Planta do book (p.36). A unidade real pode ser espelhada.');
+  setCut(un.block, un.floor);
   highlight(un);
   if (isMobile() && !camGoal) { // o mapa encolhe: traz a unidade para o centro
     const f = unitFrame(un);
@@ -858,6 +879,7 @@ function showBlock(n) {
     `<span style="color:#5f6b78">●</span> Vendidas: <b>${c('Vendido')}</b>`;
   const pk = b.tipo === 'com' ? 'com' : 'sem';
   $('bPlan').innerHTML = `<img src="${PLANTAS[pk]}" alt="Planta baixa da unidade ${TIPO[pk].toLowerCase()}: sala, cozinha, dois quartos e banheiro">`;
+  clearCut();
   highlight(null);
   if (isMobile() && !camGoal) focusBlock(n);
 }
