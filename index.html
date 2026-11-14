@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Life Residence 3D</title>
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+<div id="layout">
+
+  <aside id="left" aria-label="Filtros">
+    <div class="brand"><i></i><div>
+      <h1>Life Residence</h1>
+      <div class="sub">L Marquezzo · Parque Ipê · Feira de Santana/BA</div>
+    </div></div>
+
+    <details class="filters" id="filtros" open>
+      <summary>Filtros <span id="filtroResumo"></span></summary>
+    <label class="field">Tipologia
+      <select id="fTyp">
+        <option value="all">Todas</option>
+        <option value="com">Com varanda · 40,31 m²</option>
+        <option value="sem">Sem varanda · 37,93 m²</option>
+        <option value="garden">Garden (térreo)</option>
+      </select>
+    </label>
+
+    <div class="row2">
+      <label class="field">Andar
+        <select id="fFloor">
+          <option value="all">Todos</option>
+          <option value="1">1º (térreo)</option>
+          <option value="2">2º</option>
+          <option value="3">3º</option>
+          <option value="4">4º</option>
+          <option value="5">5º</option>
+        </select>
+      </label>
+      <label class="field">Etapa
+        <select id="fEtapa">
+          <option value="all">Todas</option>
+          <option value="1">1ª · 25 blocos</option>
+          <option value="2">2ª · 19 blocos</option>
+        </select>
+      </label>
+    </div>
+
+    <label class="field">Ir para o bloco
+      <select id="fBlock"><option value="all">Todos</option></select>
+    </label>
+
+    <label class="field">Valor máximo <span class="price-val" id="pVal"></span>
+      <input type="range" id="fPrice">
+    </label>
+
+    <label class="check"><input type="checkbox" id="fAvail"> Só disponíveis</label>
+    <label class="check"><input type="checkbox" id="fAdapt"> Só finais com possibilidade de adaptação</label>
+    <label class="check"><input type="checkbox" id="fLabels" checked> Nomes das áreas e blocos</label>
+
+    </details>
+
+    <button class="btn" id="resetView" type="button">Voltar à vista geral</button>
+
+    <div class="kpis" id="kpis" aria-live="polite"></div>
+
+    <div class="legend" aria-label="Legenda das janelas">
+      <span><span class="dot" style="background:#ffd257"></span>Disponível</span><br>
+      <span><span class="dot" style="background:#e8892b"></span>Reservado</span><br>
+      <span><span class="dot" style="background:#3b4553"></span>Vendido</span><br>
+      <span><span class="dot" style="background:#aab2bb"></span>Fora do filtro</span>
+    </div>
+
+    <div class="foot">Maquete ilustrativa montada sobre a implantação do book (p.37). Preços e status são fictícios.</div>
+  </aside>
+
+  <main id="main" aria-label="Mapa 3D do empreendimento">
+    <div class="err" id="err">Não foi possível carregar a maquete 3D neste aparelho. Use a aba Lista para consultar as unidades.</div>
+    <button type="button" class="mapbtn" id="mapHome" aria-label="Voltar à vista geral">⤢ Vista geral</button>
+    <button type="button" class="mapbtn" id="mapLocal" aria-label="Ver localização no mapa">📍 Localização</button>
+    <div class="hint" id="hint" aria-hidden="true"><span class="h-mouse">Arraste para girar · Scroll para zoom · Botão direito para mover · Clique numa janela</span><span class="h-touch">Arraste para girar · Pinça para zoom · Toque numa janela</span></div>
+    <div class="compass" aria-hidden="true"><div id="north"></div></div>
+    <div class="tip" id="tip" aria-hidden="true"><b id="tipCode"></b><span id="tipStatus"></span></div>
+  </main>
+
+  <aside id="right" aria-label="Detalhes e lista de unidades">
+    <button type="button" class="close" id="closePanel" aria-label="Fechar painel">×</button>
+    <div class="tabs" role="tablist">
+      <button class="on" role="tab" id="tab-unit" aria-selected="true" aria-controls="pane-unit" data-tab="unit">Unidade</button>
+      <button role="tab" id="tab-list" aria-selected="false" aria-controls="pane-list" data-tab="list">Lista</button>
+      <button role="tab" id="tab-map" aria-selected="false" aria-controls="pane-map" data-tab="map">Localização</button>
+    </div>
+
+    <div class="pane on" id="pane-unit" role="tabpanel" aria-labelledby="tab-unit">
+      <div id="unitView" style="display:none">
+        <h2 class="ut" id="uTitle"></h2>
+        <span class="badge" id="uBadge"></span>
+        <div class="grid2" id="uGrid"></div>
+        <div class="plan" id="uPlan"></div>
+        <div class="note" id="uNote"></div>
+      </div>
+      <div id="blockView" style="display:none">
+        <h2 class="ut" id="bTitle"></h2>
+        <div class="blk-list" id="bList"></div>
+      </div>
+    </div>
+
+    <div class="pane" id="pane-list" role="tabpanel" aria-labelledby="tab-list">
+      <div class="lcount" id="listCount"></div>
+      <div id="listBody"></div>
+    </div>
+
+    <div class="pane" id="pane-map" role="tabpanel" aria-labelledby="tab-map">
+      <h2 class="ut">Localização</h2>
+      <p class="note" id="mapAddr"></p>
+      <div class="gmap"><iframe id="mapFrame" title="Mapa da localização do Life Residence" loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe></div>
+      <div class="maplinks">
+        <a class="btn" id="mapOpen" target="_blank" rel="noopener">Abrir no Google Maps</a>
+        <a class="btn" id="mapRoute" target="_blank" rel="noopener">Como chegar</a>
+      </div>
+      <p class="note">Próximo à Av. Fraga Maia, Feira de Santana/BA.</p>
+    </div>
+  </aside>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
