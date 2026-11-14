@@ -1040,8 +1040,10 @@ function showV() {
   $('vPrev').style.visibility = $('vNext').style.visibility = vList.length > 1 ? 'visible' : 'hidden';
   const fig = viewer.querySelector('figure'); fig.style.animation = 'none'; void fig.offsetWidth; fig.style.animation = '';
 }
-function openViewer(list, i) {
+function openViewer(list, i, inline) {
   vList = list; vi = i; vFrom = document.activeElement;
+  (inline ? main : document.body).appendChild(viewer);
+  viewer.classList.toggle('inline', !!inline);
   showV(); viewer.hidden = false; $('vClose').focus();
 }
 function closeViewer() { viewer.hidden = true; if (vFrom && vFrom.focus) vFrom.focus(); }
@@ -1059,8 +1061,8 @@ document.addEventListener('click', e => { const b = e.target.closest('.gal butto
 
 /* =====================================================================
    TOUR DO LAZER
-   - Lazer 01 e 02: render aéreo do book como painel inclinado em 3D
-     (arraste gira, roda/pinça dá zoom). `plan` = posição do pino na imagem (fração x, y).
+   - Lazer 01 e 02: render aéreo do book, parado, com os pontos por cima
+     (`plan` = posição do ponto na imagem, fração x, y). A foto abre dentro da própria área do lazer.
    - Centro: a própria maquete, com a câmera voando até lá.
    Cada pino/chip abre a foto do ambiente em tela cheia.
    ===================================================================== */
@@ -1093,7 +1095,7 @@ const LAZER = [
 ];
 let lazer = null;
 const pinsEl = $('pins'), pV = new THREE.Vector3();
-const planEl = $('plan3d'), panel = $('panel'), planPins = $('planPins');
+const planPins = $('planPins');
 const itemsOf = a => LAZER.filter(l => l.a === a);
 LAZER.forEach(l => { // pinos da maquete (só o Centro)
   if (l.px === undefined) return;
@@ -1117,7 +1119,7 @@ function placePins() {
 }
 function hideMapPins() { for (const l of LAZER) if (l.el && l.shown) { l.el.style.display = 'none'; l.shown = false; } }
 function openLazer(k) {
-  openViewer(itemsOf(lazer).map(l => ({ src: `img/lazer/${l.img}.jpg`, cap: l.nome })), k);
+  openViewer(itemsOf(lazer).map(l => ({ src: `img/lazer/${l.img}.jpg`, cap: l.nome })), k, true);
 }
 function renderLazerBar() {
   $('lazerBar').innerHTML =
@@ -1125,49 +1127,19 @@ function renderLazerBar() {
     `<div class="lzrow">${Object.keys(AREAS).map(k => `<button type="button" class="chip area${k === lazer ? ' on' : ''}" data-a="${k}">${AREAS[k].nome}</button>`).join('')}<button type="button" class="chip out" data-out="1">Visão geral</button></div>`;
 }
 
-/* ---- painel inclinado ---- */
-const ps = { rz: -8, rx: 42, s: 1 };
-function applyPlan() {
-  panel.style.setProperty('--rz', ps.rz + 'deg');
-  panel.style.setProperty('--rx', ps.rx + 'deg');
-  panel.style.setProperty('--s', ps.s);
-  panel.style.transform = `rotateX(${ps.rx}deg) rotateZ(${ps.rz}deg) scale(${ps.s})`;
-}
+/* ---- render do lazer (parado) com os pontos por cima ---- */
 function showPlan(a) {
-  const items = itemsOf(a);
   $('planImg').src = AREAS[a].plano;
   $('planImg').alt = `Render aéreo do ${AREAS[a].nome}`;
-  planPins.innerHTML = items.map((l, i) =>
+  planPins.innerHTML = itemsOf(a).map((l, i) =>
     `<button type="button" class="pin pp" data-k="${i}" style="left:${l.plan[0] * 100}%;top:${l.plan[1] * 100}%" aria-label="${l.nome}">${i + 1}<span>${l.nome}</span></button>`).join('');
-  Object.assign(ps, { rz: -8, rx: 42, s: 1 });
-  applyPlan();
 }
-let drag = null, dragMoved = false;
-const ptrs = new Map();
-planEl.addEventListener('pointerdown', e => {
-  ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-  dragMoved = false;
-  drag = { x: e.clientX, y: e.clientY, d: ptrs.size === 2 ? pinchDist() : 0, s: ps.s };
-});
-addEventListener('pointermove', e => {
-  if (!ptrs.has(e.pointerId)) return;
-  const p = ptrs.get(e.pointerId), dx = e.clientX - p.x, dy = e.clientY - p.y;
-  p.x = e.clientX; p.y = e.clientY;
-  if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 6) dragMoved = true;
-  if (ptrs.size === 2) { if (drag.d) ps.s = Math.min(2.8, Math.max(0.7, drag.s * pinchDist() / drag.d)); }
-  else { ps.rz += dx * 0.35; ps.rx = Math.min(72, Math.max(12, ps.rx - dy * 0.25)); }
-  applyPlan();
-});
-const endPtr = e => { ptrs.delete(e.pointerId); if (!ptrs.size) setTimeout(() => { dragMoved = false; }, 0); else drag = { x: 0, y: 0, d: 0, s: ps.s }; };
-addEventListener('pointerup', endPtr); addEventListener('pointercancel', endPtr);
-function pinchDist() { const [a, b] = [...ptrs.values()]; return Math.hypot(a.x - b.x, a.y - b.y); }
-planEl.addEventListener('wheel', e => { e.preventDefault(); ps.s = Math.min(2.8, Math.max(0.7, ps.s * Math.exp(-e.deltaY * 0.0012))); applyPlan(); }, { passive: false });
 planPins.addEventListener('click', e => {
-  const b = e.target.closest('.pin'); if (!b || dragMoved) return;
-  openLazer(+b.dataset.k);
+  const b = e.target.closest('.pin'); if (b) openLazer(+b.dataset.k);
 });
 
 function lazerOn(a) {
+  if (!viewer.hidden) closeViewer();
   closeAll();
   lazer = a;
   const plano = !!AREAS[a].plano;
@@ -1187,6 +1159,7 @@ function lazerOn(a) {
 }
 function lazerOff() {
   if (!lazer) return;
+  if (!viewer.hidden) closeViewer();
   lazer = null;
   main.classList.remove('lz', 'plan');
   $('lazerBtn').setAttribute('aria-pressed', 'false');
