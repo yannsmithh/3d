@@ -11,6 +11,8 @@ Maquete 3D interativa do **Life Residence** (L Marquezzo · Feira de Santana/BA)
 
 > Preços e status das unidades são fictícios.
 
+- **Passeio 3D** (`jogo.html`): protótipo estilo jogo, com um boneco que anda pelos cenários do Lazer 01 e 02 (modelados a partir das fotos do book); WASD/setas, Shift corre, arraste olha, **E** abre a foto do ponto
+
 ## Estrutura
 
 ```

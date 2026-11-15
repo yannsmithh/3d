@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Life Residence · Passeio pelo lazer</title>
+<link rel="stylesheet" href="css/game.css?v=2">
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<canvas id="cv" aria-label="Passeio 3D pelo lazer do Life Residence"></canvas>
+
+<header id="top">
+  <div class="brand"><i></i><b>Life Residence</b><span>Passeio pelo lazer</span></div>
+  <div class="areas" role="tablist">
+    <button type="button" role="tab" data-a="01" class="on">Lazer 01</button>
+    <button type="button" role="tab" data-a="02">Lazer 02</button>
+  </div>
+  <a class="back" href="index.html">← Maquete</a>
+</header>
+
+<aside id="list" aria-label="Pontos do lazer"></aside>
+<canvas id="mini" width="170" height="104" aria-hidden="true"></canvas>
+
+<button type="button" id="prompt" hidden></button>
+<div id="help"><span class="k-mouse"><b>W A S D</b> andar · <b>Shift</b> correr · <b>arraste</b> para olhar · <b>E</b> ver foto</span><span class="k-touch">Joystick para andar · arraste a tela para olhar</span></div>
+<div id="stick" aria-hidden="true"><i></i></div>
+
+<div id="photo" hidden role="dialog" aria-modal="true" aria-label="Foto do ambiente">
+  <button type="button" class="px" id="pClose" aria-label="Fechar">×</button>
+  <button type="button" class="pn" id="pPrev" aria-label="Anterior">‹</button>
+  <figure>
+    <img id="pImg" alt="">
+    <figcaption><b id="pCap"></b><span id="pCount"></span></figcaption>
+  </figure>
+  <button type="button" class="pn" id="pNext" aria-label="Próxima">›</button>
+</div>
+<div id="err" hidden>Não foi possível iniciar o 3D neste aparelho.</div>
+
+<script type="module" src="js/game.js?v=2"></script>
+</body>
+</html>
