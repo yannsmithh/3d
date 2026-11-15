@@ -69,3 +69,7 @@ body.in #hub{display:none}
   #help{display:none}
 }
 @media (prefers-reduced-motion:reduce){#photo figure{animation:none}}
+.extra{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px 12px 0;flex-wrap:wrap;font-size:13px}
+.extra span{opacity:.7}
+.extra button{border:1px solid rgba(255,255,255,.25);background:rgba(20,35,58,.9);color:#fff;border-radius:999px;padding:8px 14px;font-weight:600;cursor:pointer}
+.extra button:hover{background:var(--blue)}

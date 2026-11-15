@@ -4,11 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Life Residence · Ambientes em 3D</title>
-<link rel="stylesheet" href="css/game.css?v=3">
+<link rel="stylesheet" href="css/game.css?v=5">
 <script type="importmap">
 {
   "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
   }
 }
 </script>
@@ -29,6 +30,7 @@
   <div class="stage">
     <div id="board"><img id="hubImg" alt="" draggable="false"><div id="hubPins"></div></div>
   </div>
+  <div id="hubExtra" class="extra"></div>
   <p class="hubhint">Clique num ponto para entrar no ambiente em 3D</p>
 </section>
 
@@ -37,11 +39,12 @@
   <button type="button" id="exit" class="hb">← Mapa</button>
   <b id="roomName"></b>
   <span class="sp"></span>
+  <button type="button" id="vTour" class="hb">▶ Tour</button>
   <button type="button" id="vPhoto" class="hb">Vista da foto</button>
   <button type="button" id="vCam" class="hb">1ª pessoa</button>
   <button type="button" id="vOrig" class="hb">Foto original</button>
 </div>
-<div id="help" hidden><span class="k-mouse"><b>W A S D</b> andar · <b>Shift</b> correr · <b>arraste</b> para olhar · <b>V</b> 1ª/3ª pessoa · <b>Esc</b> mapa</span><span class="k-touch">Joystick para andar · arraste a tela para olhar</span></div>
+<div id="help" hidden><span class="k-mouse"><b>W A S D</b> andar · <b>Shift</b> correr · <b>arraste</b> para olhar · <b>V</b> 1ª/3ª pessoa · <b>T</b> tour · <b>Esc</b> mapa</span><span class="k-touch">Joystick para andar · arraste a tela para olhar</span></div>
 <div id="stick" aria-hidden="true"><i></i></div>
 
 <div id="photo" hidden role="dialog" aria-modal="true" aria-label="Foto do ambiente">
@@ -53,6 +56,6 @@
 </div>
 <div id="err" hidden>Não foi possível iniciar o 3D neste aparelho.</div>
 
-<script type="module" src="js/game.js?v=5"></script>
+<script type="module" src="js/game.js?v=7"></script>
 </body>
 </html>
