@@ -3,8 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Life Residence 3D</title>
-<link rel="stylesheet" href="css/style.css?v=3">
+<title>Life Residence — Disponibilidade 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css?v=24">
 <script type="importmap">
 {
   "imports": {
@@ -15,111 +18,82 @@
 </script>
 </head>
 <body>
-<div id="layout">
+<main id="main" aria-label="Maquete 3D do empreendimento">
+  <div class="err" id="err">Não foi possível carregar a maquete 3D neste aparelho. Use o botão Lista para consultar as unidades.</div>
+  <div class="tip" id="tip" aria-hidden="true"><b id="tipCode"></b><span id="tipStatus"></span></div>
+</main>
 
-  <aside id="left" aria-label="Filtros">
-    <div class="brand"><i></i><div>
-      <h1>Life Residence</h1>
-      <div class="sub">L Marquezzo · Parque Ipê · Feira de Santana/BA</div>
-    </div></div>
+<!-- Cabeçalho -->
+<header class="brand card">
+  <h1>Life Residence <small>Parque Ipê</small></h1>
+  <p><b id="dispCount">0</b> unidades disponíveis</p>
+</header>
+<nav class="chips-top" aria-label="Vista">
+  <button type="button" class="pill" id="homeBtn">Vista geral</button>
+  <button type="button" class="pill on" id="labelsBtn" aria-pressed="true">Nomes</button>
+  <button type="button" class="pill on" id="entornoBtn" aria-pressed="true">Vizinhos</button>
+  <button type="button" class="pill" id="vizBtn">Vizinhança</button>
+</nav>
 
-    <details class="filters" id="filtros" open>
-      <summary>Filtros <span id="filtroResumo"></span></summary>
-    <label class="field">Tipologia
-      <select id="fTyp">
-        <option value="all">Todas</option>
-        <option value="com">Com varanda · 40,31 m²</option>
-        <option value="sem">Sem varanda · 37,93 m²</option>
-        <option value="garden">Garden (térreo)</option>
-      </select>
-    </label>
+<div class="compass" aria-hidden="true"><div id="north"></div></div>
 
-    <div class="row2">
-      <label class="field">Andar
-        <select id="fFloor">
-          <option value="all">Todos</option>
-          <option value="1">1º (térreo)</option>
-          <option value="2">2º</option>
-          <option value="3">3º</option>
-          <option value="4">4º</option>
-          <option value="5">5º</option>
-        </select>
-      </label>
-      <label class="field">Etapa
-        <select id="fEtapa">
-          <option value="all">Todas</option>
-          <option value="1">1ª · 25 blocos</option>
-          <option value="2">2ª · 19 blocos</option>
-        </select>
-      </label>
-    </div>
+<!-- Andares -->
+<nav class="floors card" id="floors" aria-label="Andar">
+  <span class="floors-h">Andar</span>
+  <button type="button" data-floor="all" class="on">Todos</button>
+  <button type="button" data-floor="5">5º</button>
+  <button type="button" data-floor="4">4º</button>
+  <button type="button" data-floor="3">3º</button>
+  <button type="button" data-floor="2">2º</button>
+  <button type="button" data-floor="1">1º</button>
+</nav>
 
-    <label class="field">Ir para o bloco
-      <select id="fBlock"><option value="all">Todos</option></select>
-    </label>
-
-    <label class="field">Valor máximo <span class="price-val" id="pVal"></span>
-      <input type="range" id="fPrice">
-    </label>
-
-    <label class="check"><input type="checkbox" id="fAvail"> Só disponíveis</label>
-    <label class="check"><input type="checkbox" id="fAdapt"> Só finais com possibilidade de adaptação</label>
-    <label class="check"><input type="checkbox" id="fLabels" checked> Nomes das áreas e blocos</label>
-
-    </details>
-
-    <button class="btn" id="resetView" type="button">Voltar à vista geral</button>
-
-    <div class="kpis" id="kpis" aria-live="polite"></div>
-
-    <div class="legend" aria-label="Legenda das janelas">
-      <span><span class="dot" style="background:#ffd257"></span>Disponível</span><br>
-      <span><span class="dot" style="background:#e8892b"></span>Reservado</span><br>
-      <span><span class="dot" style="background:#3b4553"></span>Vendido</span><br>
-      <span><span class="dot" style="background:#aab2bb"></span>Fora do filtro</span>
-    </div>
-
-    <div class="foot">Maquete ilustrativa montada sobre a implantação do book (p.37). Preços e status são fictícios.</div>
-  </aside>
-
-  <main id="main" aria-label="Mapa 3D do empreendimento">
-    <div class="err" id="err">Não foi possível carregar a maquete 3D neste aparelho. Use a aba Lista para consultar as unidades.</div>
-    <button type="button" class="mapbtn" id="mapHome" aria-label="Voltar à vista geral">⤢ Vista geral</button>
-    <div class="hint" id="hint" aria-hidden="true"><span class="h-mouse">Arraste para girar · Scroll para zoom · Botão direito para mover · Clique numa janela</span><span class="h-touch">Arraste para girar · Pinça para zoom · Toque numa janela</span></div>
-    <div class="compass" aria-hidden="true"><div id="north"></div></div>
-    <div class="tip" id="tip" aria-hidden="true"><b id="tipCode"></b><span id="tipStatus"></span></div>
-  </main>
-
-  <aside id="right" aria-label="Detalhes e lista de unidades">
-    <button type="button" class="close" id="closePanel" aria-label="Fechar painel">×</button>
-    <div class="tabs" role="tablist">
-      <button class="on" role="tab" id="tab-unit" aria-selected="true" aria-controls="pane-unit" data-tab="unit">Unidade</button>
-      <button role="tab" id="tab-list" aria-selected="false" aria-controls="pane-list" data-tab="list">Lista</button>
-    </div>
-
-    <div class="pane on" id="pane-unit" role="tabpanel" aria-labelledby="tab-unit">
-      <div id="unitView" style="display:none">
-        <h2 class="ut" id="uTitle"></h2>
-        <span class="badge" id="uBadge"></span>
-        <div class="grid2" id="uGrid"></div>
-        <div class="plan" id="uPlan"></div>
-        <div class="note" id="uNote"></div>
-      </div>
-      <div id="blockView" style="display:none">
-        <h2 class="ut" id="bTitle"></h2>
-        <div class="blk-list" id="bList"></div>
-        <div class="plan" id="bPlan"></div>
-        <div class="note">Planta do book (p.36). Clique numa janela para ver a unidade.</div>
-      </div>
-    </div>
-
-    <div class="pane" id="pane-list" role="tabpanel" aria-labelledby="tab-list">
-      <div class="lcount" id="listCount"></div>
-      <div id="listBody"></div>
-    </div>
-  </aside>
+<!-- Rodapé -->
+<div class="legend pill" aria-label="Legenda">
+  <span><i class="sw" style="background:#f2b65a"></i>Disponível <em>(janela acesa)</em></span>
+  <span><i class="sw" style="background:#c8694a"></i>Reservado</span>
+  <span><i class="sw" style="background:#3a4654"></i>Vendido</span>
+</div>
+<div class="attrib" id="attrib"></div>
+<div class="hint" id="hint" aria-hidden="true"><span class="h-mouse">Arraste para girar · Scroll aproxima · Clique numa janela ou área</span><span class="h-touch">Um dedo gira · dois aproximam</span></div>
+<div class="fabs">
+  <button type="button" class="pill fab" id="openList"><span class="ic">☰</span> Lista</button>
+  <button type="button" class="pill fab primary" id="openFilter"><span class="ic">⚟</span> Filtrar <b id="filterBadge" hidden></b></button>
 </div>
 
-<script type="module" src="js/app.js?v=3"></script>
+<!-- Painel: filtros -->
+<section class="sheet" id="sheetFilter" role="dialog" aria-modal="false" aria-labelledby="fTitle" hidden>
+  <div class="sheet-h"><h2 id="fTitle">Filtrar unidades</h2><button type="button" class="x" data-close aria-label="Fechar">×</button></div>
+  <div class="sheet-b" id="filterBody"></div>
+  <div class="sheet-f">
+    <button type="button" class="btn ghost" id="clearFilters">Limpar</button>
+    <button type="button" class="btn dark" id="seeUnits">Ver unidades</button>
+  </div>
+</section>
+
+<!-- Painel: lista -->
+<section class="sheet" id="sheetList" role="dialog" aria-modal="false" aria-labelledby="lTitle" hidden>
+  <div class="sheet-h"><h2 id="lTitle">Unidades</h2><button type="button" class="x" data-close aria-label="Fechar">×</button></div>
+  <div class="sorts" id="sorts">
+    <button type="button" class="chip on" data-sort="price">Menor valor</button>
+    <button type="button" class="chip" data-sort="-price">Maior valor</button>
+    <button type="button" class="chip" data-sort="-floor">Andar mais alto</button>
+  </div>
+  <div class="sheet-b"><div class="lcount" id="listCount"></div><div id="listBody"></div></div>
+</section>
+
+<!-- Painel: vizinhança -->
+<section class="sheet" id="sheetViz" role="dialog" aria-modal="false" aria-labelledby="vTitle" hidden>
+  <div class="sheet-h"><h2 id="vTitle">Vizinhança</h2><button type="button" class="x" data-close aria-label="Fechar">×</button></div>
+  <div class="sheet-b" id="vizBody"></div>
+</section>
+
+<!-- Painel: bloco / unidade -->
+<section class="drawer" id="drawer" aria-label="Detalhes" hidden>
+  <div class="drawer-h"><button type="button" class="back" id="backBtn">‹ <span id="backTxt">Vista geral</span></button><button type="button" class="x" id="closeDrawer" aria-label="Fechar">×</button></div>
+  <div class="drawer-b" id="drawerBody"></div>
+</section>
+
+<script type="module" src="js/app.js?v=24"></script>
 </body>
 </html>

@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 /* =====================================================================
    DADOS — tirados do Book Life Residence
@@ -51,7 +53,7 @@ const PRECO_BASE = 169990;
 const PLANTAS = { com: 'img/planta-com.jpg', sem: 'img/planta-sem.jpg' };
 const TIPO = { com: 'Com varanda', sem: 'Sem varanda', garden: 'Garden (térreo)' };
 const AREA = { com: 40.31, sem: 37.93, garden: 37.93 };
-const STATUS_COR = { 'Disponível': '#1f7a44', 'Reservado': '#9a6a10', 'Vendido': '#5f6b78' };
+const STATUS_COR = { 'Disponível': '#2f7a55', 'Reservado': '#b5562f', 'Vendido': '#5f6b78' };
 
 function rnd(seed){ const x = Math.sin(seed * 999.13) * 10000; return x - Math.floor(x); }
 
@@ -93,7 +95,7 @@ function unitFrame(un) {
 
 /* ---------- Renderer e cena ---------- */
 const main = document.getElementById('main');
-const mq = matchMedia('(max-width:820px) and (orientation:portrait), (max-width:600px)');
+const mq = matchMedia('(max-width:700px)');
 const isMobile = () => mq.matches;
 let renderer;
 try {
@@ -109,8 +111,8 @@ renderer.domElement.setAttribute('role', 'img');
 renderer.domElement.setAttribute('aria-label', 'Maquete 3D do Life Residence. Use os filtros ou a aba Lista para encontrar unidades.');
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0xcfe3f1);
-scene.fog = new THREE.Fog(0xcfe3f1, 700, 1600);
+scene.background = new THREE.Color(0xe9e7df);
+scene.fog = new THREE.Fog(0xe9e7df, 1100, 2600);
 
 const camera = new THREE.PerspectiveCamera(38, 1, 2, 3000);
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -118,7 +120,7 @@ controls.enableDamping = true;
 controls.maxPolarAngle = Math.PI * 0.47;
 controls.minDistance = 25;
 controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
-controls.maxDistance = 900;
+controls.maxDistance = 1500;
 
 let camGoal = null;
 function homeView(animate) {
@@ -156,8 +158,8 @@ resize();
 homeView(false);
 controls.addEventListener('start', () => { camGoal = null; document.getElementById('hint').classList.add('off'); });
 
-scene.add(new THREE.HemisphereLight(0xf4f8ff, 0xc9c4b4, 2.1));
-const sun = new THREE.DirectionalLight(0xfff3e0, 2.4);
+scene.add(new THREE.HemisphereLight(0xfffaf0, 0xc9c2b0, 1.45));
+const sun = new THREE.DirectionalLight(0xfff1dc, 1.9);
 sun.position.set(-140, 230, 150); // coerente com as sombras pintadas no piso
 scene.add(sun);
 
@@ -203,10 +205,10 @@ const SITE = [[342,88],[1618,88],[1618,341],[1865,341],[1865,603],[300,603],[300
 const sitePath = () => { g.beginPath(); SITE.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); };
 
 // entorno
-g.fillStyle = '#c6cfb4'; g.fillRect(GX0, GY0, GW, GH);
-for (let i = 0; i < 5000; i++) { g.fillStyle = ['#bcc6a8', '#cdd5bd', '#c0caae'][i % 3]; g.fillRect(GX0 + Math.random() * GW, GY0 + Math.random() * GH, 1.6, 1.6); }
+g.fillStyle = '#e2e0d6'; g.fillRect(GX0, GY0, GW, GH);
+for (let i = 0; i < 5000; i++) { g.fillStyle = ['#dad8cd', '#e7e5db', '#dddbd0'][i % 3]; g.fillRect(GX0 + Math.random() * GW, GY0 + Math.random() * GH, 1.6, 1.6); }
 // Rua Rubens Francisco Dias (oeste): asfalto, ciclovia e calçada
-R(200, GY0, 246, GY0 + GH, '#5a5f66', false);
+R(200, GY0, 246, GY0 + GH, '#bdbcb5', false);
 R(246, GY0, 260, GY0 + GH, '#d08a8f', false);
 R(260, GY0, 300, GY0 + GH, '#cfd0d0', false);
 g.strokeStyle = '#f2e9b0'; g.lineWidth = 0.9; g.setLineDash([9, 9]);
@@ -215,15 +217,15 @@ g.strokeStyle = '#fff'; g.lineWidth = 0.6; g.beginPath(); g.moveTo(253, GY0); g.
 
 // gramado do terreno
 g.save(); sitePath(); g.clip();
-g.fillStyle = '#7fa55b'; g.fillRect(GX0, GY0, GW, GH);
+g.fillStyle = '#a3bd80'; g.fillRect(GX0, GY0, GW, GH);
 for (let i = 0; i < 26000; i++) {
-  g.fillStyle = ['#6f9650', '#8db668', '#789d55', '#9cc076'][i % 4];
+  g.fillStyle = ['#97b375', '#abc78a', '#9db97a', '#b2cb91'][i % 4];
   g.fillRect(300 + Math.random() * 1570, 85 + Math.random() * 520, 1.3, 1.3);
 }
 g.restore();
 
 // vias internas (piso intertravado)
-const ROAD = '#a7a49d';
+const ROAD = '#cfccc3';
 const ROADS = [[422,188,1607,220],[422,441,1607,474],[422,188,455,603],[300,470,455,512],[530,96,556,190],
  [1012,220,1040,441],[1440,474,1466,601],[1511,94,1537,603],[1580,94,1606,603],[1511,92,1606,108]];
 ROADS.forEach(r => R(r[0], r[1], r[2], r[3], ROAD));
@@ -234,7 +236,7 @@ for (let y = 90; y < 605; y += 2.2) { g.beginPath(); g.moveTo(300, y); g.lineTo(
 g.restore();
 // estacionamentos
 function parking(x0, y0, x1, y1) {
-  R(x0, y0, x1, y1, '#cbc5ab');
+  R(x0, y0, x1, y1, '#dcd7c6');
   const horiz = (x1 - x0) > (y1 - y0);
   g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 0.45;
   const L = horiz ? x1 - x0 : y1 - y0, n = Math.floor(L / 11), st = L / n;
@@ -381,7 +383,7 @@ groundTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
 const ground = new THREE.Mesh(new THREE.PlaneGeometry(GW * S, GH * S), new THREE.MeshStandardMaterial({ map: groundTex, roughness: 1 }));
 ground.rotation.x = -Math.PI / 2;
 scene.add(ground);
-const far = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshStandardMaterial({ color: 0xc6cfb4, roughness: 1 }));
+const far = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshStandardMaterial({ color: 0xe2e0d6, roughness: 1 }));
 far.rotation.x = -Math.PI / 2; far.position.y = -0.6;
 scene.add(far);
 
@@ -389,7 +391,7 @@ scene.add(far);
    OBJETOS 3D
    ===================================================================== */
 const M = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.85, ...o });
-const mWall = M(0xdcdcda), mCore = M(0x8a8e94), mRoof = M(0x5a5f66), mWhite = M(0xf4f4f2), mWood = M(0x8a5a36),
+const mWall = M(0xf3efe6), mCore = M(0xcfc8ba), mRoof = M(0xe4e0d7), mWhite = M(0xf4f4f2), mWood = M(0x8a5a36),
       mDark = M(0x2b323c), mLime = new THREE.MeshBasicMaterial({ color: 0xb5d334 }), mMetal = M(0x59626c, { metalness: 0.4, roughness: 0.5 }),
       mTerra = M(0xb5613c), mConc = M(0xbdbcb8), mOrange = M(0xe58a2e), mBlueWall = M(0x8794a3),
       mGlass = M(0x9fcde3, { roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.6 }),
@@ -425,6 +427,14 @@ function building(x0, y0, x1, y1, h, wall, glassSide) { // volume + laje branca 
   lit.position.set(p[0] + p[3] * 0.06, h * 0.45, p[1] + p[4] * 0.06); lit.rotation.y = p[2];
   gl.position.set(p[0] + p[3] * 0.14, h * 0.45, p[1] + p[4] * 0.14); gl.rotation.y = p[2];
   scene.add(lit, gl);
+  // caixilhos: montantes a cada ~1,5 m, travessa superior e inferior
+  const along = horiz ? [1, 0] : [0, 1], n = Math.max(2, Math.round(len / 1.5));
+  const bar = (w, hh, dx, y) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w, hh, 0.09), mDark);
+    m.position.set(p[0] + p[3] * 0.18 + along[0] * dx, y, p[1] + p[4] * 0.18 + along[1] * dx); m.rotation.y = p[2]; scene.add(m);
+  };
+  for (let i = 0; i <= n; i++) bar(0.08, h * 0.6, -len / 2 + i * len / n, h * 0.45);
+  bar(len + 0.08, 0.09, 0, h * 0.75); bar(len + 0.08, 0.09, 0, h * 0.15);
 }
 function fence(x0, y0, x1, y1, h) { // alambrado: tela translúcida + postes
   const w = (x1 - x0) * S, d = (y1 - y0) * S, cx = wx((x0 + x1) / 2), cz = wz((y0 + y1) / 2);
@@ -440,7 +450,7 @@ function fence(x0, y0, x1, y1, h) { // alambrado: tela translúcida + postes
 /* ---- Blocos ---- */
 const blockMeshes = [];
 const blockParts = {}; // peças de cada bloco, para "cortar" o prédio num andar
-const mBase = M(0x6f7379);
+const mBase = M(0x8a5a36);
 for (const b of BL) {
   const bx = wx(b.px), bz = wz(b.py), m = CORE / 2 + WL / 2, H = b.o === 'H';
   const parts = blockParts[b.n] = { wings: [], roofs: [], win: [], bal: [], pan: [] };
@@ -455,17 +465,23 @@ for (const b of BL) {
   parts.res = box(bx, bz, 2.4, 2.4, 1.6, mWhite, HT + 1.4); // reservatório
 }
 
-/* ---- Janelas, esquadrias, painéis e varandas (instanciados) ---- */
+/* ---- Janelas, esquadrias, painéis e varandas (instanciados) ----
+   Segue a planta do book (p.36) e a fachada (p.33). Cada apartamento ocupa meia ala:
+   - ponta da ala (f.end): só a janela do quarto 1, puxada para o lado da parede com o vizinho;
+   - lado comprido (f.side), da ponta para a circulação: quarto 2, banheiro, sala com varanda
+     (ou janela larga, na torre sem varanda) e cozinha, junto da escada.
+   É a mesma orientação usada para pôr a planta em cima do andar cortado (planQuad). */
 const dummy = new THREE.Object3D();
 const winUnit = [];
-const NW = N * 3;
+const NW = N * 5;
 const unitPlane = new THREE.PlaneGeometry(1, 1);
 const winMesh = new THREE.InstancedMesh(unitPlane, new THREE.MeshBasicMaterial({ toneMapped: false }), NW);
 const frameMesh = new THREE.InstancedMesh(unitPlane, new THREE.MeshBasicMaterial({ color: 0xf7f7f5 }), NW);
-const panelMesh = new THREE.InstancedMesh(unitPlane, new THREE.MeshStandardMaterial({ color: 0xa3a7ac, roughness: 0.9 }), BL.length * 8);
+const panelMesh = new THREE.InstancedMesh(unitPlane, new THREE.MeshStandardMaterial({ color: 0xd4b582, roughness: 0.9 }), BL.length * 8);
 const nCom = units.filter(u => u.typ === 'com').length;
-const balMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(3.6, 0.16, 1.25), M(0xdcdddd), nCom);
-const guardMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(3.6, 1.0, 0.06), M(0xa9cfe0, { transparent: true, opacity: 0.55, roughness: 0.15 }), nCom);
+const recessMesh = new THREE.InstancedMesh(unitPlane, new THREE.MeshStandardMaterial({ color: 0x6e6a63, roughness: 0.9 }), nCom); // fundo da varanda
+const balMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(2.7, 0.16, 0.35), M(0xdcdddd), nCom);
+const guardMesh = new THREE.InstancedMesh(new THREE.BoxGeometry(2.7, 1.0, 0.06), M(0xa9cfe0, { transparent: true, opacity: 0.55, roughness: 0.15 }), nCom);
 let wi = 0, bi = 0;
 function putPlane(mesh, i, face, off, along, y, w, h) {
   const tx = Math.abs(face.nz), tz = Math.abs(face.nx);
@@ -475,46 +491,52 @@ function putPlane(mesh, i, face, off, along, y, w, h) {
   dummy.updateMatrix();
   mesh.setMatrixAt(i, dummy.matrix);
 }
+// deslocamento ao longo da fachada lateral: u = 0 na ponta da ala, 1 na circulação
+const alongSide = (f, u) => (f.end.nx * Math.abs(f.side.nz) + f.end.nz * Math.abs(f.side.nx)) * (0.5 - u) * WL;
+// deslocamento ao longo da ponta: d > 0 vai para a fachada lateral, d < 0 para a parede com o vizinho
+const alongEnd = (f, d) => (f.side.nx * Math.abs(f.end.nz) + f.side.nz * Math.abs(f.end.nx)) * d;
+const SIDE_WIN = { // [u, largura, altura, centro acima do piso]
+  com: [[0.195, 1.2, 1.2, 1.7], [0.39, 0.6, 0.6, 2.1], [0.63, 2.0, 2.1, 1.15], [0.865, 1.0, 1.0, 1.85]],
+  sem: [[0.195, 1.2, 1.2, 1.7], [0.39, 0.6, 0.6, 2.1], [0.63, 2.0, 1.4, 1.65], [0.865, 1.0, 1.0, 1.85]]
+};
 units.forEach((un, ui) => {
   const f = unitFrame(un), y0 = (un.floor - 1) * BH;
   const com = un.typ === 'com';
-  // fachada de topo da ala: sala (janela larga ou porta da varanda)
-  const ew = com ? 2.4 : 2.6, eh = com ? 2.1 : 1.45, ey = y0 + (com ? 1.25 : 1.65);
-  putPlane(frameMesh, wi, f.end, 0.05, 0, ey, ew + 0.3, eh + 0.3);
-  putPlane(winMesh, wi, f.end, 0.09, 0, ey, ew, eh); blockParts[un.block].win.push(wi); winUnit[wi++] = ui;
-  // fachada lateral: dois quartos
-  for (const a of [-2.1, 2.1]) {
-    putPlane(frameMesh, wi, f.side, 0.05, a, y0 + 1.7, 1.6, 1.5);
-    putPlane(winMesh, wi, f.side, 0.09, a, y0 + 1.7, 1.3, 1.2); blockParts[un.block].win.push(wi); winUnit[wi++] = ui;
-  }
-  if (com) {
-    dummy.scale.set(1, 1, 1);
-    dummy.rotation.set(0, Math.atan2(f.end.nx, f.end.nz), 0);
-    dummy.position.set(f.end.x + f.end.nx * 0.62, y0 + 0.08, f.end.z + f.end.nz * 0.62); dummy.updateMatrix();
+  const addWin = (face, along, y, w, h) => {
+    putPlane(frameMesh, wi, face, 0.05, along, y, w + 0.3, h + 0.3);
+    putPlane(winMesh, wi, face, 0.09, along, y, w, h); blockParts[un.block].win.push(wi); winUnit[wi++] = ui;
+  };
+  addWin(f.end, alongEnd(f, -1.56), y0 + 1.7, 1.2, 1.2);               // quarto 1
+  for (const [u, w, h, cy] of SIDE_WIN[com ? 'com' : 'sem']) addWin(f.side, alongSide(f, u), y0 + cy, w, h);
+  if (com) { // varanda: fundo escuro, laje e guarda-corpo de vidro
+    const a = alongSide(f, 0.63), tx = Math.abs(f.side.nz), tz = Math.abs(f.side.nx);
+    putPlane(recessMesh, bi, f.side, 0.03, a, y0 + BH / 2, 2.7, BH - 0.1);
+    dummy.scale.set(1, 1, 1); dummy.rotation.set(0, Math.atan2(f.side.nx, f.side.nz), 0);
+    dummy.position.set(f.side.x + f.side.nx * 0.17 + tx * a, y0 + 0.08, f.side.z + f.side.nz * 0.17 + tz * a); dummy.updateMatrix();
     balMesh.setMatrixAt(bi, dummy.matrix);
-    dummy.position.set(f.end.x + f.end.nx * 1.2, y0 + 0.66, f.end.z + f.end.nz * 1.2); dummy.updateMatrix();
+    dummy.position.set(f.side.x + f.side.nx * 0.32 + tx * a, y0 + 0.66, f.side.z + f.side.nz * 0.32 + tz * a); dummy.updateMatrix();
     blockParts[un.block].bal.push([bi, un.floor]); guardMesh.setMatrixAt(bi++, dummy.matrix);
   }
 });
 let pi = 0;
-BL.forEach(b => { // painéis escuros verticais (fachada em dois tons, como no book p.33)
-  for (let q = 0; q < 4; q++) {
-    const f = unitFrame({ block: b.n, q });
-    blockParts[b.n].pan.push([pi, q]);
-    putPlane(panelMesh, pi++, f.side, 0.02, 0, HT / 2 + 0.25, 6.6, HT - 0.5);
-    putPlane(panelMesh, pi++, f.end, 0.02, 0, HT / 2 + 0.25, 3.4, HT - 0.5);
-  }
+function putPanels(n, q, i, h) { // faixas em dois tons: coluna da varanda e coluna do quarto 1 (book p.33)
+  const f = unitFrame({ block: n, q });
+  putPlane(panelMesh, i, f.side, 0.02, alongSide(f, 0.63), h / 2 + 0.25, 3.2, h - 0.5);
+  putPlane(panelMesh, i + 1, f.end, 0.02, alongEnd(f, -1.56), h / 2 + 0.25, 2.2, h - 0.5);
+}
+BL.forEach(b => {
+  for (let q = 0; q < 4; q++) { blockParts[b.n].pan.push([pi, q]); putPanels(b.n, q, pi, HT); pi += 2; }
 });
-[winMesh, frameMesh, panelMesh, balMesh, guardMesh].forEach(m => { m.instanceMatrix.needsUpdate = true; scene.add(m); });
+[winMesh, frameMesh, panelMesh, recessMesh, balMesh, guardMesh].forEach(m => { m.instanceMatrix.needsUpdate = true; scene.add(m); });
 
 /* ---- Corte por andar: ao clicar numa unidade, o bloco mostra só até o andar dela ---- */
-const ORIG = new Map([winMesh, frameMesh, balMesh, guardMesh].map(m => [m, m.instanceMatrix.array.slice()]));
+const ORIG = new Map([winMesh, frameMesh, recessMesh, balMesh, guardMesh].map(m => [m, m.instanceMatrix.array.slice()]));
 const ZERO = new THREE.Matrix4().makeScale(0, 0, 0);
 function showInst(mesh, i, on) {
   if (on) mesh.instanceMatrix.array.set(ORIG.get(mesh).subarray(i * 16, i * 16 + 16), i * 16);
   else mesh.setMatrixAt(i, ZERO);
 }
-function applyCut(n, k) { // k = último andar visível (FLOORS = prédio inteiro)
+function applyCut(n, k, plan = k < FLOORS) { // k = último andar visível (FLOORS = prédio inteiro)
   const p = blockParts[n], h = k * BH;
   p.wings.forEach(w => { w.scale.y = h / HT; w.position.y = h / 2; });
   p.roofs.forEach(r => { r.position.y = h + 0.175; });
@@ -522,27 +544,60 @@ function applyCut(n, k) { // k = último andar visível (FLOORS = prédio inteir
   p.res.position.y = h + 1.4 + 0.8;
   if (p.label) p.label.position.y = h + 5.5;
   p.win.forEach(i => { const on = units[winUnit[i]].floor <= k; showInst(winMesh, i, on); showInst(frameMesh, i, on); });
-  p.bal.forEach(([i, f]) => { const on = f <= k; showInst(balMesh, i, on); showInst(guardMesh, i, on); });
-  p.pan.forEach(([i, q]) => {
-    const f = unitFrame({ block: n, q });
-    putPlane(panelMesh, i, f.side, 0.02, 0, h / 2 + 0.25, 6.6, h - 0.5);
-    putPlane(panelMesh, i + 1, f.end, 0.02, 0, h / 2 + 0.25, 3.4, h - 0.5);
-  });
-  [winMesh, frameMesh, panelMesh, balMesh, guardMesh].forEach(m => { m.instanceMatrix.needsUpdate = true; });
+  p.bal.forEach(([i, f]) => { const on = f <= k; showInst(recessMesh, i, on); showInst(balMesh, i, on); showInst(guardMesh, i, on); });
+  p.pan.forEach(([i, q]) => putPanels(n, q, i, h));
+  [winMesh, frameMesh, panelMesh, recessMesh, balMesh, guardMesh].forEach(m => { m.instanceMatrix.needsUpdate = true; });
+  showPlans(n, k, plan);
 }
-let cut = null;
-function setCut(n, k) {
-  if (cut && cut.n !== n) applyCut(cut.n, FLOORS);
-  applyCut(n, k);
-  cut = k < FLOORS ? { n, k } : null;
-}
-function clearCut() { if (cut) { applyCut(cut.n, FLOORS); cut = null; } }
 
+/* ---- Planta vista de cima: com o bloco cortado, as 4 unidades do andar mostram a planta do book ----
+   Na imagem, a borda de baixo é a fachada lateral (quartos) e a esquerda é a ponta da ala;
+   o lado direito encosta na circulação. Por isso cada quadrante sai espelhado, como na obra. */
+const unitIdx = new Map(units.map((u, i) => [`${u.block}-${u.floor}-${u.q}`, i]));
+const unitAt = (b, f, q) => units[unitIdx.get(`${b}-${f}-${q}`)];
+const texLoader = new THREE.TextureLoader();
+const planMat = {};
+for (const k of ['com', 'sem']) {
+  const t = texLoader.load(PLANTAS[k]); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  planMat[k] = new THREE.MeshBasicMaterial({ map: t, toneMapped: false, side: THREE.DoubleSide });
+}
+const planMeshes = {}; // bloco -> [4 meshes]
+function planQuad(un) {
+  const f = unitFrame(un);
+  const L = new THREE.Vector3(f.end.nx, 0, f.end.nz), Sd = new THREE.Vector3(f.side.nx, 0, f.side.nz);
+  const U = L.clone().negate(), V = Sd;            // u: da ponta da ala para a circulação; v: de dentro para a fachada
+  const w = WL - 0.1, d = WW / 2 - 0.1, c = new THREE.Vector3(f.cx, 0, f.cz);
+  const P = (su, sv) => c.clone().addScaledVector(U, su * w / 2).addScaledVector(V, sv * d / 2);
+  const pts = [P(-1, -1), P(1, -1), P(1, 1), P(-1, 1)]; // topo-esq, topo-dir, base-dir, base-esq da imagem
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pts.flatMap(p => [p.x, 0, p.z]), 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 1, 1, 1, 1, 0, 0, 0], 2));
+  // garante a face virada para cima
+  const n = new THREE.Vector3().subVectors(pts[1], pts[0]).cross(new THREE.Vector3().subVectors(pts[3], pts[0]));
+  g.setIndex(n.y > 0 ? [0, 1, 3, 1, 2, 3] : [0, 3, 1, 1, 3, 2]);
+  return g;
+}
+function showPlans(n, k, plan) {
+  if (!planMeshes[n]) {
+    planMeshes[n] = [0, 1, 2, 3].map(q => {
+      const m = new THREE.Mesh(planQuad(unitAt(n, 1, q)), planMat.sem);
+      m.visible = false; m.userData.planBlock = n; m.userData.q = q; m.renderOrder = 2; scene.add(m); return m;
+    });
+  }
+  planMeshes[n].forEach(m => {
+    m.visible = plan;
+    if (!m.visible) return;
+    const un = unitAt(n, k, m.userData.q);
+    m.material = planMat[un.typ === 'com' ? 'com' : 'sem'];
+    m.position.y = k * BH + 0.37;
+    m.userData.unit = units.indexOf(un);
+  });
+}
 /* Destaque da unidade: contorno verde no volume do apartamento */
 const hlGroup = new THREE.Group();
 const hlBox = new THREE.BoxGeometry(1, 1, 1);
 hlGroup.add(
-  new THREE.LineSegments(new THREE.EdgesGeometry(hlBox), new THREE.LineBasicMaterial({ color: 0x16a34a })),
+  new THREE.LineSegments(new THREE.EdgesGeometry(hlBox), new THREE.LineBasicMaterial({ color: 0x1f9d6b })),
   new THREE.Mesh(hlBox, new THREE.MeshBasicMaterial({ color: 0x22c55e, transparent: true, opacity: 0.28, depthWrite: false }))
 );
 hlGroup.visible = false;
@@ -647,7 +702,8 @@ boxPx(356, 337, 390, 343, 0.95, mWood);                       // bancada gourmet
   sp.position.set(wx(352), 4.72, wz(370)); scene.add(sp);
 }
 // piscina: espreguiçadeiras e guarda-sóis
-for (let i = 0; i < 7; i++) { box(wx(377), wz(228 + i * 8.5), 2.0, 0.75, 0.35, mWhite, 0.05); }
+for (let i = 0; i < 7; i++) lounger(wx(378), wz(229 + i * 8.5));
+for (let i = 0; i < 3; i++) lounger(wx(322), wz(232 + i * 9), Math.PI);
 for (let i = 0; i < 4; i++) {
   post(390, 232 + i * 17, 2.5, mMetal, 0.06);
   const c = new THREE.Mesh(new THREE.ConeGeometry(1.7, 0.6, 12), M(i % 2 ? 0xffffff : 0x2a7fb8));
@@ -723,26 +779,31 @@ pavilion(1616, 350, 1630, 362, 2.3, mMetal, mMetal); // bicicletário
 /* ---- Rótulos ---- */
 const labelGroup = new THREE.Group(); scene.add(labelGroup);
 const areaLabels = new THREE.Group(); labelGroup.add(areaLabels);
-function label(text, px, py, y) {
+function label(text, px, py, y, style = 'area') {
+  // style: 'area' (pílula branca), 'major' (avenida: pílula verde-escura), 'minor' (rua: menor, fundo bege)
+  const bg = { area: 'rgba(255,255,255,.95)', major: 'rgba(30,58,47,.92)', minor: 'rgba(250,248,242,.9)' }[style];
+  const fg = { area: '#1d2621', major: '#ffffff', minor: '#4b524d' }[style];
+  const fs = style === 'minor' ? 'bold 40px Arial' : 'bold 44px Arial', size = style === 'minor' ? 0.017 : style === 'major' ? 0.02 : 0.019;
   const c = document.createElement('canvas');
-  const x = c.getContext('2d'); x.font = 'bold 44px Arial';
+  const x = c.getContext('2d'); x.font = fs;
   const w = Math.ceil(x.measureText(text).width) + 56; c.width = w; c.height = 84;
   const g2 = c.getContext('2d');
-  g2.fillStyle = 'rgba(20,35,58,.86)'; g2.beginPath(); g2.roundRect(0, 0, w, 84, 42); g2.fill();
-  g2.fillStyle = '#fff'; g2.font = 'bold 44px Arial'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText(text, w / 2, 44);
+  g2.fillStyle = bg; g2.beginPath(); g2.roundRect(0, 0, w, 84, 42); g2.fill();
+  g2.fillStyle = fg; g2.font = fs; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText(text, w / 2, 44);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false, sizeAttenuation: false }));
-  s.scale.set(w / 84 * 0.019, 0.019, 1); s.position.set(wx(px), y, wz(py)); s.renderOrder = 5;
+  s.scale.set(w / 84 * size, size, 1); s.position.set(wx(px), y, wz(py)); s.renderOrder = 5;
   areaLabels.add(s);
+  return s;
 }
 [['Portaria', 338, 492, 9.5], ['Salão de festas', 350, 372, 8.5], ['Piscina', 356, 268, 5], ['Parque infantil', 362, 186, 7],
  ['Quiosque gourmet', 490, 150, 8], ['Pet play', 432, 100, 5], ['Mini market', 972, 510, 7.5], ['Coworking', 981, 583, 7.5],
  ['Quadras de areia', 1764, 391, 7.5], ['Quadra poliesportiva', 1750, 542, 8], ['Academia', 1636, 509, 9],
- ['Salão de jogos', 1635, 551, 8], ['Pista de cooper', 1800, 600, 4], ['Rua Rubens Francisco Dias', 232, 300, 5]]
+ ['Salão de jogos', 1635, 551, 8], ['Pista de cooper', 1800, 600, 4]]
   .forEach(l => label(...l));
 BL.forEach(b => { // número do bloco, como na implantação
   const c = document.createElement('canvas'); c.width = c.height = 96;
-  const x = c.getContext('2d'); x.fillStyle = '#111'; x.beginPath(); x.arc(48, 48, 46, 0, 7); x.fill();
+  const x = c.getContext('2d'); x.fillStyle = '#1e3a2f'; x.beginPath(); x.arc(48, 48, 46, 0, 7); x.fill();
   x.fillStyle = '#fff'; x.font = 'bold 50px Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(String(b.n).padStart(2, '0'), 48, 51);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
   const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthTest: false, sizeAttenuation: false }));
@@ -750,31 +811,232 @@ BL.forEach(b => { // número do bloco, como na implantação
   labelGroup.add(s); blockParts[b.n].label = s;
 });
 
+/* =====================================================================
+   PISCINA — água com reflexo e ondulação, borda de pedra e espreguiçadeiras
+   ===================================================================== */
+const pmrem = new THREE.PMREMGenerator(renderer);
+const envTex = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const waterNormal = (() => { // mapa de normais de ondinhas, gerado num canvas
+  const N = 256, c = document.createElement('canvas'); c.width = c.height = N;
+  const x = c.getContext('2d'), img = x.createImageData(N, N);
+  const h = (i, j) => Math.sin(i * 0.19 + Math.sin(j * 0.07) * 2) + Math.sin(j * 0.23 + Math.sin(i * 0.05) * 3) * 0.8 + Math.sin((i + j) * 0.11) * 0.6;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    const dx = h(i + 1, j) - h(i - 1, j), dy = h(i, j + 1) - h(i, j - 1), k = (j * N + i) * 4;
+    img.data[k] = 128 + dx * 40; img.data[k + 1] = 128 + dy * 40; img.data[k + 2] = 255; img.data[k + 3] = 255;
+  }
+  x.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 3); return t;
+})();
+const mWater = new THREE.MeshStandardMaterial({ color: 0x38b6d8, roughness: 0.04, metalness: 0.1, transparent: true, opacity: 0.78,
+  envMap: envTex, envMapIntensity: 1.3, normalMap: waterNormal, normalScale: new THREE.Vector2(0.35, 0.35) });
+const mStone = M(0xf1ede4, { roughness: 0.7 });
+function pool(x0, y0, x1, y1) {
+  const w = new THREE.Mesh(new THREE.PlaneGeometry((x1 - x0) * S, (y1 - y0) * S), mWater);
+  w.rotation.x = -Math.PI / 2; w.position.set(wx((x0 + x1) / 2), 0.1, wz((y0 + y1) / 2)); scene.add(w);
+  const b = 0.45, hgt = 0.16; // borda de pedra
+  boxPx(x0 - b / S, y0 - b / S, x1 + b / S, y0, hgt, mStone); boxPx(x0 - b / S, y1, x1 + b / S, y1 + b / S, hgt, mStone);
+  boxPx(x0 - b / S, y0, x0, y1, hgt, mStone); boxPx(x1, y0, x1 + b / S, y1, hgt, mStone);
+}
+pool(343, 225, 366, 316); pool(368, 292, 386, 313);
+function lounger(x, z, rot = 0) { // espreguiçadeira branca: assento + encosto inclinado
+  const g = new THREE.Group();
+  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.12, 0.7), mWhite); seat.position.set(-0.25, 0.32, 0);
+  const back = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.12, 0.7), mWhite); back.position.set(0.68, 0.55, 0); back.rotation.z = 0.6;
+  const base = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.26, 0.55), M(0xdedad0)); base.position.set(0, 0.13, 0);
+  g.add(seat, back, base); g.position.set(x, 0.02, z); g.rotation.y = rot + Math.PI / 2; scene.add(g);
+}
+
+/* =====================================================================
+   ENTORNO REAL — ruas (OpenStreetMap) e edificações vizinhas (Overture Maps:
+   Google Open Buildings + Microsoft + OSM), já alinhados ao terreno. Ver data/entorno.json.
+   ===================================================================== */
+const entorno = new THREE.Group(); scene.add(entorno);
+const poiGroup = new THREE.Group(); poiGroup.visible = false; scene.add(poiGroup);
+let POIS = [];
+const GATE = { x: wx(338), z: wz(492) }; // portaria
+const POI_COR = { Escola: '#3d7bd9', Faculdade: '#3d7bd9', Mercado: '#2f7a55', Supermercado: '#2f7a55', Padaria: '#2f7a55', Farmácia: '#d94a4a', Saúde: '#d94a4a', Clínica: '#d94a4a', Hospital: '#d94a4a', Igreja: '#8a6ad1', Parque: '#4c9a3c', Esporte: '#4c9a3c', Academia: '#e9772e', Posto: '#6b716c' };
+function buildEntorno(d) {
+  const rnd2 = i => { const x = Math.sin(i * 12.9898) * 43758.5453; return x - Math.floor(x); };
+  // ruas: fitas com juntas redondas
+  const roads = [], greens = [], col = new THREE.Color();
+  for (const r of d.r) {
+    const p = r.p, pts = []; for (let i = 0; i < p.length; i += 2) pts.push([p[i], p[i + 1]]);
+    if (r.w) {
+      const hw = r.w / 2, pos = [];
+      for (let i = 1; i < pts.length; i++) {
+        const [ax, az] = pts[i - 1], [bx, bz] = pts[i], L = Math.hypot(bx - ax, bz - az) || 1, nx = -(bz - az) / L * hw, nz = (bx - ax) / L * hw;
+        pos.push(ax + nx, 0, az + nz, bx + nx, 0, bz + nz, ax - nx, 0, az - nz, ax - nx, 0, az - nz, bx + nx, 0, bz + nz, bx - nx, 0, bz - nz);
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); roads.push(g);
+      for (const [x, z] of pts) { const c = new THREE.CircleGeometry(hw, 10); c.rotateX(-Math.PI / 2); c.translate(x, 0, z); roads.push(c.toNonIndexed()); }
+    } else if (['park', 'pitch', 'recreation_ground', 'grass', 'garden', 'meadow', 'forest', 'swimming_pool'].includes(r.k)) {
+      const sh = new THREE.Shape(pts.map(([x, z]) => new THREE.Vector2(x, -z)));
+      const g = new THREE.ShapeGeometry(sh); g.rotateX(-Math.PI / 2); greens.push(g.toNonIndexed());
+    }
+  }
+  const strip = g => { g.deleteAttribute('normal'); g.deleteAttribute('uv'); return g; };
+  if (roads.length) {
+    const m = new THREE.Mesh(mergeGeometries(roads.map(strip)), new THREE.MeshBasicMaterial({ color: 0xcfcbc1 }));
+    m.position.y = -0.25; entorno.add(m);
+  }
+  if (greens.length) {
+    const m = new THREE.Mesh(mergeGeometries(greens.map(strip)), new THREE.MeshBasicMaterial({ color: 0xc3cfa6 }));
+    m.position.y = -0.4; entorno.add(m);
+  }
+  // edificações: extrusão da planta; altura pelo nº de andares ou estimada pela área (casas de 1–2 pavimentos)
+  const PAL = [0xe6e1d7, 0xddd7cb, 0xd3cdc1, 0xe9e4db, 0xcfc9bc];
+  const geos = d.b.map((b, i) => {
+    const p = b.p, v = []; for (let k = 0; k < p.length; k += 2) v.push(new THREE.Vector2(p[k], -p[k + 1]));
+    const h = b.f ? b.f * 3 : b.a < 90 ? 3.2 : b.a < 260 ? (rnd2(i) < 0.35 ? 6.2 : 3.6) : b.a < 900 ? 6.5 : 8;
+    const g = new THREE.ExtrudeGeometry(new THREE.Shape(v), { depth: h, bevelEnabled: false });
+    g.rotateX(-Math.PI / 2);
+    col.setHex(PAL[Math.floor(rnd2(i + 7) * PAL.length)]);
+    const n = g.attributes.position.count, c = new Float32Array(n * 3);
+    for (let k = 0; k < n; k++) { c[k * 3] = col.r; c[k * 3 + 1] = col.g; c[k * 3 + 2] = col.b; }
+    g.setAttribute('color', new THREE.BufferAttribute(c, 3));
+    return g;
+  });
+  const bm = new THREE.Mesh(mergeGeometries(geos), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
+  entorno.add(bm);
+  // nomes das ruas: geometria do OpenStreetMap, grafia conferida no Google Maps
+  const NOME = { // OSM -> como aparece no Google Maps (null = não rotular)
+    'Rua Rubens Francisco Dias': null, // trilha de terra que o OSM batizou com o nome da avenida
+    'Avenida Rubens Francisco Dias': 'Av. Rubens Francisco Dias', 'Avenida Francisco Fraga Maia': 'Av. Francisco Fraga Maia',
+    'Rua da Administração': 'R. da Contabilidade', 'Rua Vicente dos Reis': 'R. Vicente Reis', 'Rua Parque Antarctica': 'R. Parque Antártica',
+    'Rua Barão de Macaubas': 'R. Barão de Macaúbas', 'Rua Gremio': 'R. Grêmio', 'Rua Rua Nossa Sra. de Lourde': 'R. Nossa Sra. de Lourdes'
+  };
+  const nome = n => n in NOME ? NOME[n] : n.replace(/^Avenida /, 'Av. ').replace(/^Rua /, 'R. ').replace(/^Travessa /, 'Tv. ').replace(/^Tv /, 'Tv. ');
+  const MAJOR = new Set(['Av. Francisco Fraga Maia', 'Av. Rubens Francisco Dias', 'Av. dos Universitários']);
+  const byName = new Map(); // junta os trechos de cada rua
+  for (const r of d.r) {
+    if (!r.n || !r.w) continue;
+    const n = nome(r.n); if (!n) continue;
+    const p = r.p, segs = byName.get(n) || [];
+    for (let i = 2; i < p.length; i += 2) segs.push([p[i - 2], p[i - 1], p[i], p[i + 1]]);
+    byName.set(n, segs);
+  }
+  for (const [n, segs] of byName) {
+    const major = MAJOR.has(n);
+    // candidatos: meio de cada trecho comprido o bastante para caber o nome, fora do terreno
+    const cand = segs.map(([ax, az, bx, bz]) => ({ x: (ax + bx) / 2, z: (az + bz) / 2, L: Math.hypot(bx - ax, bz - az) }))
+      .filter(c => c.L > (major ? 30 : 22) && !(Math.abs(c.x) < 215 && Math.abs(c.z) < 70)).map(c => ({ ...c, d: Math.hypot(c.x, c.z) }))
+      .filter(c => c.d < (major ? 900 : 600)).sort((a, b) => a.d - b.d);
+    const placed = [];
+    for (const c of cand) { // avenidas: repete a cada ~300 m; ruas: um rótulo só
+      if (placed.some(q => Math.hypot(q.x - c.x, q.z - c.z) < 300)) continue;
+      placed.push(c);
+      label(n, c.x / S + OX, c.z / S + OY, major ? 6 : 3, major ? 'major' : 'minor').userData.street = major ? 'major' : 'minor';
+      if (!major || placed.length >= 4) break;
+    }
+  }
+  // pontos de interesse
+  lastFar = null; // reaplica a visibilidade com os rótulos novos
+  POIS = d.poi.map(p => ({ ...p, dist: Math.round(Math.hypot(p.x - GATE.x, p.z - GATE.z) / 10) * 10 })).sort((a, b) => a.dist - b.dist);
+  POIS.forEach((p, i) => {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const x = c.getContext('2d'); x.fillStyle = POI_COR[p.c] || '#555'; x.beginPath(); x.arc(32, 26, 22, 0, 7); x.fill();
+    x.beginPath(); x.moveTo(18, 40); x.lineTo(46, 40); x.lineTo(32, 62); x.fill(); x.fillStyle = '#fff'; x.beginPath(); x.arc(32, 26, 9, 0, 7); x.fill();
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false, sizeAttenuation: false }));
+    s.scale.set(0.028, 0.028, 1); s.center.set(0.5, 0); s.position.set(p.x, 1, p.z); s.renderOrder = 7; s.userData.poi = i;
+    poiGroup.add(s); p.sprite = s;
+  });
+  document.getElementById("attrib").textContent = '© OpenStreetMap · Overture Maps';
+}
+fetch('data/entorno.json').then(r => r.json()).then(buildEntorno).catch(e => console.warn('Entorno não carregou', e));
+
+function renderViz() {
+  if (!POIS.length) { $('vizBody').innerHTML = '<p class="lcount">Carregando o entorno…</p>'; return; }
+  const cats = [...new Set(POIS.map(p => p.c))];
+  $('vizBody').innerHTML =
+    `<p class="lcount">Distância em linha reta a partir da portaria. ${POIS.length} lugares num raio de ~1 km.</p>` +
+    POIS.map((p, i) => `<button type="button" class="lrow poi" data-p="${i}"><i class="pin" style="background:${POI_COR[p.c] || '#555'}"></i>` +
+      `<span class="info">${p.n.replace(/</g, '&lt;')}<small>${p.c}</small></span><span class="val">${p.dist < 1000 ? p.dist + ' m' : (p.dist / 1000).toFixed(1).replace('.', ',') + ' km'}<small>${Math.max(1, Math.round(p.dist * 1.3 / 80))} min a pé</small></span></button>`).join('');
+}
+let poiSel = null;
+const poiLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineDashedMaterial({ color: 0xe9772e, dashSize: 8, gapSize: 6, depthTest: false }));
+poiLine.renderOrder = 7; poiLine.visible = false; poiGroup.add(poiLine);
+document.addEventListener('click', e => {
+  const b = e.target.closest('.poi'); if (!b) return;
+  const p = POIS[+b.dataset.p];
+  if (poiSel) poiSel.sprite.scale.set(0.028, 0.028, 1);
+  poiSel = p; p.sprite.scale.set(0.045, 0.045, 1);
+  document.querySelectorAll('.poi').forEach(x => x.classList.toggle('on', x === b));
+  poiLine.geometry.setFromPoints([new THREE.Vector3(GATE.x, 1.5, GATE.z), new THREE.Vector3(p.x, 1.5, p.z)]); poiLine.computeLineDistances(); poiLine.visible = true;
+  flyTo((p.x + GATE.x) / 2, 0, (p.z + GATE.z) / 2, THREE.MathUtils.clamp(p.dist * 2.5, 260, 1500), 0.85);
+});
+
 /* ---------- Cores das janelas ---------- */
-const C_LIT = new THREE.Color(0xffd257), C_RES = new THREE.Color(0xe8892b), C_SOLD = new THREE.Color(0x3b4553), C_OFF = new THREE.Color(0xaab2bb);
+const C_LIT = new THREE.Color(0xf2b65a), C_RES = new THREE.Color(0xc8694a), C_SOLD = new THREE.Color(0x3a4654), C_OFF = new THREE.Color(0xd3d5d1);
 
-/* ---------- Filtros ---------- */
+/* ---------- Estado dos filtros ---------- */
 const $ = id => document.getElementById(id);
-const fTyp = $('fTyp'), fFloor = $('fFloor'), fEtapa = $('fEtapa'), fBlock = $('fBlock'), fPrice = $('fPrice'),
-      fAvail = $('fAvail'), fAdapt = $('fAdapt'), fLabels = $('fLabels'), pVal = $('pVal'), kpis = $('kpis');
-BL.forEach(b => fBlock.insertAdjacentHTML('beforeend', `<option value="${b.n}">Bloco ${String(b.n).padStart(2, '0')} · ${b.etapa}ª etapa</option>`));
-fPrice.min = Math.floor(minP / 500) * 500; fPrice.max = Math.ceil(maxP / 500) * 500; fPrice.step = 500; fPrice.value = fPrice.max;
+const F0 = { price: 'all', typ: 'all', floor: 'all', etapa: 'all', block: 'all', avail: false, adapt: false };
+const F = { ...F0 };
+const PRICE = {
+  p1: { t: 'Até R$ 180 mil', ok: p => p < 180000 },
+  p2: { t: 'R$ 180 a 190 mil', ok: p => p >= 180000 && p < 190000 },
+  p3: { t: 'Acima de R$ 190 mil', ok: p => p >= 190000 }
+};
+const GROUPS = [
+  { key: 'price', title: 'Valor', opts: Object.entries(PRICE).map(([v, o]) => [v, o.t]) },
+  { key: 'typ', title: 'Tipologia', opts: [['com', 'Com varanda · 40,31 m²'], ['sem', 'Sem varanda · 37,93 m²'], ['garden', 'Garden (térreo)']] },
+  { key: 'floor', title: 'Andar', opts: [1, 2, 3, 4, 5].map(f => [String(f), f === 1 ? '1º (térreo)' : f + 'º']) },
+  { key: 'etapa', title: 'Etapa', opts: [['1', '1ª etapa · 25 blocos'], ['2', '2ª etapa · 19 blocos']] }
+];
+const pad = n => String(n).padStart(2, '0');
 
-function matches(un) {
-  if (fTyp.value !== 'all' && un.typ !== fTyp.value) return false;
-  if (fFloor.value !== 'all' && un.floor !== +fFloor.value) return false;
-  if (fEtapa.value !== 'all' && un.etapa !== +fEtapa.value) return false;
-  if (fBlock.value !== 'all' && un.block !== +fBlock.value) return false;
-  if (un.price > +fPrice.value) return false;
-  if (fAvail.checked && un.status !== 'Disponível') return false;
-  if (fAdapt.checked && !un.adapt) return false;
+/* ---------- Posição solar ----------
+   Posição conferida no Google Maps, no OpenStreetMap e na foto aérea do book (p.2): o lado curto do
+   terreno (portaria e piscina) dá para a Av. Rubens Francisco Dias, que corre a ~73° (OSO→ENE), e o
+   condomínio se estende para SSE, paralelo à Av. Fraga Maia. O "topo" da implantação aponta para ENE,
+   então o norte fica ~73° à esquerda dele (a rosa dos ventos do book erra por ~25°). */
+const NORTH = { x: -0.956, z: -0.292 }, EAST = { x: -NORTH.z, z: NORTH.x };
+const bearing = (nx, nz) => (Math.atan2(nx * EAST.x + nz * EAST.z, nx * NORTH.x + nz * NORTH.z) * 180 / Math.PI + 360) % 360;
+const DIR8 = ['Norte', 'Nordeste', 'Leste', 'Sudeste', 'Sul', 'Sudoeste', 'Oeste', 'Noroeste'];
+const SUN8 = [
+  'sol a maior parte do dia, mais forte no inverno', 'sol da manhã até o começo da tarde', 'nascente: sol da manhã',
+  'sol só no começo da manhã', 'pouco sol direto, face mais fresca', 'sol só no fim da tarde',
+  'poente: sol da tarde, face mais quente', 'sol da tarde até o pôr do sol'];
+const SUN4 = { norte: 'Norte · sol o dia todo', nascente: 'Nascente · sol da manhã', poente: 'Poente · sol da tarde', sul: 'Sul · pouco sol' };
+const sun4 = b => b >= 315 || b < 45 ? 'norte' : b < 135 ? 'nascente' : b < 225 ? 'sul' : 'poente';
+for (const un of units) {
+  const f = unitFrame(un);
+  un.faces = [f.end, f.side].map(s => { const b = bearing(s.nx, s.nz), i = Math.round(b / 45) % 8; return { b, dir: DIR8[i], sun: SUN8[i], s4: sun4(b) }; });
+  un.sun = [...new Set(un.faces.map(x => x.s4))];
+}
+F0.sol = 'all'; F.sol = 'all';
+GROUPS.push({ key: 'sol', title: 'Posição solar (janelas)', opts: Object.entries(SUN4) });
+
+function matches(un, f = F) {
+  if (f.sol !== 'all' && !un.sun.includes(f.sol)) return false;
+  if (f.price !== 'all' && !PRICE[f.price].ok(un.price)) return false;
+  if (f.typ !== 'all' && un.typ !== f.typ) return false;
+  if (f.floor !== 'all' && un.floor !== +f.floor) return false;
+  if (f.etapa !== 'all' && un.etapa !== +f.etapa) return false;
+  if (f.block !== 'all' && un.block !== +f.block) return false;
+  if (f.avail && un.status !== 'Disponível') return false;
+  if (f.adapt && !un.adapt) return false;
   return true;
 }
+const activeCount = () => Object.keys(F0).filter(k => F[k] !== F0[k]).length;
+
+/* ---------- Corte por andar ----------
+   Andar escolhido na barra lateral: todos os blocos mostram só até ele.
+   Unidade selecionada: o bloco dela é cortado no andar da unidade. */
+const curK = {};
+function syncCuts() {
+  for (const b of BL) {
+    let k = F.floor === 'all' ? FLOORS : +F.floor, plan = F.floor !== 'all';
+    if (selected && selected.kind === 'unit' && selected.un.block === b.n) { k = selected.un.floor; plan = true; }
+    // a planta aparece também no último andar (k = FLOORS): aí não há corte, só a planta sobre a laje
+    const key = k + (plan ? 'p' : '');
+    if ((curK[b.n] ?? FLOORS + '') !== key) { applyCut(b.n, k, plan); curK[b.n] = key; }
+  }
+}
+
+/* ---------- Atualiza tudo ---------- */
 function refresh() {
-  pVal.textContent = brl(+fPrice.value);
-  const ativos = [fTyp, fFloor, fEtapa, fBlock].filter(x => x.value !== 'all').length
-    + (+fPrice.value < +fPrice.max) + fAvail.checked + fAdapt.checked;
-  $('filtroResumo').textContent = ativos ? `${ativos} ativo${ativos > 1 ? 's' : ''}` : 'nenhum ativo';
   let vis = 0, disp = 0;
   const ok = units.map(un => { const m = matches(un); if (m) { vis++; if (un.status === 'Disponível') disp++; } return m; });
   for (let i = 0; i < NW; i++) {
@@ -782,35 +1044,105 @@ function refresh() {
     winMesh.setColorAt(i, !ok[winUnit[i]] ? C_OFF : un.status === 'Disponível' ? C_LIT : un.status === 'Reservado' ? C_RES : C_SOLD);
   }
   winMesh.instanceColor.needsUpdate = true;
-  kpis.innerHTML =
-    `<div class="kpi"><b>${vis}</b><span>no filtro</span></div>` +
-    `<div class="kpi"><b style="color:#1f7a44">${disp}</b><span>disponíveis no filtro</span></div>` +
-    `<div class="kpi"><b>${N}</b><span>unidades no total</span></div>` +
-    `<div class="kpi"><b>${BL.length}</b><span>blocos · 2 etapas</span></div>`;
-  if ($('pane-list').classList.contains('on')) renderList();
+  $('dispCount').textContent = disp;
+  const n = activeCount(), badge = $('filterBadge');
+  badge.hidden = !n; badge.textContent = n;
+  $('seeUnits').textContent = `Ver ${vis} unidade${vis === 1 ? '' : 's'}`;
+  document.querySelectorAll('#floors button').forEach(b => b.classList.toggle('on', b.dataset.floor === String(F.floor)));
+  syncCuts();
+  if (!$('sheetFilter').hidden) renderFilters();
+  if (!$('sheetList').hidden) renderList();
+  if (selected && selected.kind === 'block') showBlock(selected.b, true);
 }
-[fTyp, fFloor, fEtapa, fPrice, fAvail, fAdapt].forEach(el => el.addEventListener('input', refresh));
-fBlock.addEventListener('input', () => { refresh(); if (fBlock.value !== 'all') { focusBlock(+fBlock.value); showBlock(+fBlock.value); } });
-fLabels.addEventListener('input', () => { labelGroup.visible = fLabels.checked; });
-$('resetView').addEventListener('click', () => { clearCut(); homeView(true); });
-$('mapHome').addEventListener('click', () => { clearCut(); homeView(true); });
-if (isMobile()) $('filtros').open = false;
 
-/* ---------- Painel direito ---------- */
+/* ---------- Painel de filtros ---------- */
+function renderFilters() {
+  const count = (key, val) => units.reduce((s, u) => s + matches(u, { ...F, [key]: val }), 0);
+  let h = '';
+  for (const g of GROUPS) {
+    h += `<div class="fgroup"><h3>${g.title}</h3><div class="chips">`;
+    for (const [v, t] of g.opts) {
+      const c = count(g.key, v), on = String(F[g.key]) === v;
+      h += `<button type="button" class="chip${on ? ' on' : ''}" data-k="${g.key}" data-v="${v}" aria-pressed="${on}"${!c && !on ? ' disabled' : ''}>${t}<small>${c}</small></button>`;
+    }
+    h += `</div></div>`;
+  }
+  h += `<div class="fgroup"><h3>Disponibilidade</h3>
+    <label class="toggle"><span>Só disponíveis<small>Esconde reservadas e vendidas</small></span><input type="checkbox" data-t="avail"${F.avail ? ' checked' : ''}></label>
+    <label class="toggle"><span>Finais adaptáveis<small>Com possibilidade de adaptação (PcD)</small></span><input type="checkbox" data-t="adapt"${F.adapt ? ' checked' : ''}></label></div>`;
+  h += `<div class="fgroup"><h3>Bloco</h3><select class="select" id="fBlock"><option value="all">Todos os blocos</option>` +
+    BL.map(b => `<option value="${b.n}"${String(F.block) === String(b.n) ? ' selected' : ''}>Bloco ${pad(b.n)} · ${b.etapa}ª etapa · ${TIPO[b.tipo === 'garden' ? 'garden' : b.tipo].toLowerCase()}</option>`).join('') +
+    `</select></div>`;
+  const body = $('filterBody'), st = body.scrollTop;
+  body.innerHTML = h; body.scrollTop = st;
+}
+$('filterBody').addEventListener('click', e => {
+  const c = e.target.closest('.chip'); if (!c) return;
+  F[c.dataset.k] = F[c.dataset.k] === c.dataset.v ? 'all' : c.dataset.v;
+  refresh();
+});
+$('filterBody').addEventListener('change', e => {
+  if (e.target.dataset.t) { F[e.target.dataset.t] = e.target.checked; refresh(); }
+  if (e.target.id === 'fBlock') {
+    F.block = e.target.value; refresh();
+    if (F.block !== 'all') { focusBlock(+F.block); }
+  }
+});
+$('clearFilters').addEventListener('click', () => { Object.assign(F, F0); refresh(); });
+$('seeUnits').addEventListener('click', () => openSheet('list'));
+document.querySelectorAll('#floors button').forEach(b => b.addEventListener('click', () => {
+  F.floor = b.dataset.floor; refresh();
+}));
+
+/* ---------- Painéis ---------- */
 let selected = null;
-function setTab(name) {
-  document.querySelectorAll('.tabs button').forEach(b => { const on = b.dataset.tab === name; b.classList.toggle('on', on); b.setAttribute('aria-selected', on); });
-  $('pane-unit').classList.toggle('on', name === 'unit');
-  $('pane-list').classList.toggle('on', name === 'list');
+function openSheet(name) {
+  $('sheetFilter').hidden = name !== 'filter';
+  $('sheetList').hidden = name !== 'list';
+  $('sheetViz').hidden = name !== 'viz';
+  poiGroup.visible = name === 'viz';
+  if (name) { closeDrawer(); hideHint(); }
+  shiftGoal = name && !isMobile() ? Math.min(404, innerWidth / 2) : 0; // tira o centro da vista de baixo do painel
+  if (name === 'filter') renderFilters();
   if (name === 'list') renderList();
+  if (name === 'viz') renderViz();
 }
+$('vizBtn').addEventListener('click', () => openSheet($('sheetViz').hidden ? 'viz' : null));
+$('entornoBtn').addEventListener('click', e => {
+  entorno.visible = !entorno.visible;
+  e.currentTarget.classList.toggle('on', entorno.visible);
+  e.currentTarget.setAttribute('aria-pressed', entorno.visible);
+});
+$('openFilter').addEventListener('click', () => openSheet($('sheetFilter').hidden ? 'filter' : null));
+$('openList').addEventListener('click', () => openSheet($('sheetList').hidden ? 'list' : null));
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => openSheet(null)));
 
-document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
-function openPanel(open) {
-  $('layout').classList.toggle('show', open);
+let shiftGoal = 0, shift = 0; // desloca o centro da câmera para fora da área coberta pela gaveta
+function openDrawer() {
+  $('drawer').hidden = false; document.body.classList.add('drawer-open');
+  openSheetSilently();
+  const d = $('drawer').getBoundingClientRect();
+  shiftGoal = isMobile() ? d.height : d.width;
 }
-function closeAll() { selected = null; highlight(null); clearCut(); openPanel(false); }
-$('closePanel').addEventListener('click', closeAll);
+function openSheetSilently() { $('sheetFilter').hidden = true; $('sheetList').hidden = true; $('sheetViz').hidden = true; poiGroup.visible = false; }
+function closeDrawer() { $('drawer').hidden = true; document.body.classList.remove('drawer-open'); shiftGoal = 0; }
+function closeAll() {
+  selected = null; highlight(null); areaHL(null); closeDrawer(); syncCuts();
+  history.replaceState(null, '', location.pathname + location.search);
+}
+$('closeDrawer').addEventListener('click', closeAll);
+$('backBtn').addEventListener('click', () => {
+  if (selected && selected.kind === 'unit') { showBlock(selected.un.block); }
+  else { closeAll(); homeView(true); }
+});
+$('homeBtn').addEventListener('click', () => { closeAll(); openSheet(null); homeView(true); });
+$('labelsBtn').addEventListener('click', e => {
+  labelGroup.visible = !labelGroup.visible;
+  e.currentTarget.classList.toggle('on', labelGroup.visible);
+  e.currentTarget.setAttribute('aria-pressed', labelGroup.visible);
+});
+const hideHint = () => $('hint').classList.add('off');
+setTimeout(hideHint, 7000);
 
 function highlight(un) {
   if (!un) { hlGroup.visible = false; return; }
@@ -828,86 +1160,222 @@ function placeTip(un) {
   tip.style.left = ((tipV.x * 0.5 + 0.5) * main.clientWidth) + 'px';
   tip.style.top = (((-tipV.y * 0.5 + 0.5) * main.clientHeight) - 10) + 'px';
   tip.style.display = 'block';
-  $('tipCode').textContent = `${un.code} · Bl. ${String(un.block).padStart(2, '0')}`;
+  $('tipCode').textContent = `${un.code} · Bl. ${pad(un.block)}`;
   const st = $('tipStatus');
   st.textContent = un.status; st.style.color = STATUS_COR[un.status];
 }
 
+const planImg = typ => {
+  const k = typ === 'com' ? 'com' : 'sem';
+  return `<div class="d-plan"><img src="${PLANTAS[k]}" alt="Planta baixa da unidade ${TIPO[k].toLowerCase()}: sala, cozinha, dois quartos e banheiro"></div>`;
+};
+
 function showUnit(un) {
   selected = { kind: 'unit', un };
-  openPanel(true); setTab('unit');
-  $('blockView').style.display = 'none';
-  $('unitView').style.display = 'block';
-  $('uTitle').textContent = `Apto ${un.code} · Bloco ${String(un.block).padStart(2, '0')}`;
-  const badge = $('uBadge');
-  badge.textContent = un.status; badge.style.background = STATUS_COR[un.status];
-  $('uGrid').innerHTML =
-    `<div><span>Tipologia</span><b>${TIPO[un.typ]}</b></div>` +
-    `<div><span>Andar</span><b>${un.floor}º${un.floor === 1 ? ' (térreo)' : ''}</b></div>` +
-    `<div><span>Área construída</span><b>${AREA[un.typ].toString().replace('.', ',')} m²</b></div>` +
-    `<div><span>Etapa</span><b>${un.etapa}ª etapa</b></div>` +
-    `<div><span>Final</span><b>${String(un.u).padStart(2, '0')}${un.adapt ? ' · adaptável' : ''}</b></div>` +
-    `<div><span>Valor (fictício)</span><b>${brl(un.price)}</b></div>`;
-  $('uPlan').innerHTML = `<img src="${PLANTAS[un.typ === 'com' ? 'com' : 'sem']}" alt="Planta baixa da unidade ${TIPO[un.typ].toLowerCase()}: sala, cozinha, dois quartos e banheiro">`;
-  $('uNote').textContent =
-    (un.adapt ? 'Este final aparece na implantação como unidade com possibilidade de adaptação; o book não informa em quais andares. ' : '') +
-    (un.typ === 'garden'
-      ? 'Planta do book (p.36) da unidade sem varanda. A área do garden não tem planta no material.'
-      : 'Planta do book (p.36). A unidade real pode ser espelhada.');
-  setCut(un.block, un.floor);
+  $('backTxt').textContent = `Bloco ${pad(un.block)}`;
+  const m2 = Math.round(un.price / AREA[un.typ]);
+  $('drawerBody').innerHTML =
+    `<h2 class="d-title">Apartamento ${un.code}</h2>` +
+    `<div class="d-sub"><i class="dot" style="background:${STATUS_COR[un.status]}"></i>${un.status} · ${un.floor}º andar · Bloco ${pad(un.block)}</div>` +
+    `<div class="d-price"><span>Valor (fictício)</span><b>${brl(un.price)}</b><small>${brl(m2)} por m² construído</small></div>` +
+    `<div class="d-grid">` +
+      `<div><span>Tipologia</span><b>${TIPO[un.typ]}</b></div>` +
+      `<div><span>Área construída</span><b>${AREA[un.typ].toString().replace('.', ',')} m²</b></div>` +
+      `<div><span>Etapa</span><b>${un.etapa}ª etapa</b></div>` +
+      `<div><span>Final</span><b>${pad(un.u)}${un.adapt ? ' · adaptável' : ''}</b></div>` +
+    `</div>` +
+    `<h3 class="d-h">Posição solar</h3><div class="sun">` +
+      un.faces.map((x, i) => `<div><i class="arrow" style="transform:rotate(${x.b}deg)" aria-hidden="true">↑</i>` +
+        `<span><b>${i ? 'Fachada lateral' : 'Fachada de topo'} · ${x.dir}</b><small>${x.sun[0].toUpperCase() + x.sun.slice(1)}</small></span></div>`).join('') +
+    `</div><p class="d-note">Seta = para onde as janelas olham (norte para cima). Baseado na posição real do terreno.</p>` +
+    `<h3 class="d-h">Planta</h3>${planImg(un.typ)}` +
+    `<p class="d-note">${un.adapt ? 'Este final aparece na implantação como unidade com possibilidade de adaptação; o book não informa em quais andares. ' : ''}` +
+    (un.typ === 'garden' ? 'Planta do book (p.36) da unidade sem varanda. A área do garden não tem planta no material.' : 'Planta do book (p.36). A unidade real pode ser espelhada.') + `</p>`;
+  openDrawer();
+  syncCuts();
   highlight(un);
-  if (isMobile() && !camGoal) { // o mapa encolhe: traz a unidade para o centro
-    const f = unitFrame(un);
-    flyTo(f.cx, (un.floor - 1) * BH, f.cz, Math.min(camera.position.distanceTo(controls.target), 110));
-  }
+  const f = unitFrame(un);
+  flyTo(f.cx, un.floor * BH, f.cz, isMobile() ? 90 : 52, 0.94); // vista quase de cima para ler a planta
+  history.replaceState(null, '', `#${un.block}-${un.code}`);
 }
-function showBlock(n) {
+function showBlock(n, keepView) {
   selected = { kind: 'block', b: n };
-  openPanel(true); setTab('unit');
-  $('unitView').style.display = 'none';
-  $('blockView').style.display = 'block';
+  $('backTxt').textContent = 'Vista geral';
   const b = blockBy[n], list = units.filter(x => x.block === n);
   const c = s => list.filter(x => x.status === s).length;
   const tipo = b.tipo === 'garden' ? 'Sem varanda, com garden no térreo' : b.tipo === 'com' ? 'Torre com varanda' : 'Torre sem varanda';
-  $('bTitle').textContent = `Bloco ${String(n).padStart(2, '0')}`;
-  $('bList').innerHTML =
-    `Tipologia: <b>${tipo}</b><br>Etapa: <b>${b.etapa}ª</b><br>` +
-    `Unidades: <b>${list.length}</b> (5 andares × 4 finais)<br>` +
-    (b.adapt.length ? `Finais adaptáveis: <b>${b.adapt.map(a => String(a).padStart(2, '0')).sort().join(' e ')}</b><br>` : '') +
-    `<span style="color:#1f7a44">●</span> Disponíveis: <b>${c('Disponível')}</b><br>` +
-    `<span style="color:#9a6a10">●</span> Reservadas: <b>${c('Reservado')}</b><br>` +
-    `<span style="color:#5f6b78">●</span> Vendidas: <b>${c('Vendido')}</b>`;
-  const pk = b.tipo === 'com' ? 'com' : 'sem';
-  $('bPlan').innerHTML = `<img src="${PLANTAS[pk]}" alt="Planta baixa da unidade ${TIPO[pk].toLowerCase()}: sala, cozinha, dois quartos e banheiro">`;
-  clearCut();
+  let stack = '';
+  for (let f = FLOORS; f >= 1; f--) {
+    stack += `<span class="fl">${f}º</span>`;
+    list.filter(x => x.floor === f).sort((a, b2) => a.u - b2.u).forEach(un => {
+      const cls = un.status === 'Disponível' ? 's-d' : un.status === 'Reservado' ? 's-r' : 's-v';
+      stack += `<button type="button" class="${cls}${matches(un) ? '' : ' off'}" data-i="${units.indexOf(un)}" title="Apto ${un.code} · ${un.status}">${un.code}</button>`;
+    });
+  }
+  $('drawerBody').innerHTML =
+    `<h2 class="d-title">Bloco ${pad(n)}</h2>` +
+    `<div class="d-sub">${tipo} · ${b.etapa}ª etapa · 5 andares × 4 finais</div>` +
+    `<div class="stats"><div><b style="color:#b9781f">${c('Disponível')}</b><span>disponíveis</span></div>` +
+    `<div><b>${c('Reservado')}</b><span>reservadas</span></div><div><b>${c('Vendido')}</b><span>vendidas</span></div></div>` +
+    `<h3 class="d-h">Unidades por andar</h3><div class="stack" id="stack">${stack}</div>` +
+    (b.adapt.length ? `<p class="d-note">Finais com possibilidade de adaptação: <b>${b.adapt.map(pad).sort().join(' e ')}</b>.</p>` : '') +
+    `<h3 class="d-h">Planta</h3>${planImg(b.tipo)}<p class="d-note">Planta do book (p.36). Clique numa unidade acima ou numa janela da maquete.</p>`;
+  if (keepView) return;
+  openDrawer();
   highlight(null);
-  if (isMobile() && !camGoal) focusBlock(n);
+  syncCuts();
+  focusBlock(n);
+  history.replaceState(null, '', `#bloco-${n}`);
+}
+$('drawerBody').addEventListener('click', e => {
+  const s = e.target.closest('#stack button');
+  if (s) showUnit(units[+s.dataset.i]);
+});
+
+/* ---------- Áreas comuns ----------
+   box/parts em pixels da implantação (p.37). Fotos: renders do book. A planta é esquemática,
+   desenhada com as medidas reais tiradas da implantação; o mobiliário é ilustrativo. */
+const AREAS = [
+  { id: 'portaria', n: '01', nome: 'Portaria com grab and go', box: [323, 455, 354, 538], fotos: ['portaria'], pg: 6, kind: 'room', furn: 'balcao', parts: [[328, 517, 350, 536, 'room', 'Grab and go'], [323, 486, 354, 497, 'deck', 'Acesso']] },
+  { id: 'salao-festas', n: '02', nome: 'Salão de festas', box: [324, 348, 374, 392], fotos: ['fachada-clube', 'salao-festas'], pg: 11, kind: 'room', furn: 'mesas' },
+  { id: 'salao-infantil', n: '03', nome: 'Salão infantil', box: [332, 394, 392, 430], fotos: ['salao-infantil'], pg: 12, kind: 'room', furn: 'mesas' },
+  { id: 'varanda-gourmet', n: '04', nome: 'Varanda gourmet', box: [352, 334, 394, 346], fotos: ['varanda-gourmet'], pg: 13, kind: 'deck', furn: 'bancada' },
+  { id: 'piscina', n: '05–08', nome: 'Piscinas adulto e infantil', box: [318, 213, 399, 332], fotos: ['piscina'], pg: 14, kind: 'deck',
+    parts: [[370, 225, 395, 285, 'deck', 'Deck seco'], [330, 262, 343, 298, 'wet', 'Deck molhado'], [343, 225, 366, 316, 'water', 'Piscina adulto'], [368, 292, 386, 313, 'water', 'Infantil']] },
+  { id: 'parque-infantil', n: '12 · 42', nome: 'Parque infantil e pista infantil', box: [330, 150, 402, 214], fotos: ['parque-infantil'], pg: 28, kind: 'grass', parts: [[348, 170, 380, 204, 'play', 'Brinquedos']] },
+  { id: 'quiosque', n: '11', nome: 'Quiosque gourmet', box: [474, 132, 508, 168], fotos: ['quiosque'], pg: 15, kind: 'deck', furn: 'mesas', parts: [[478, 136, 503, 145, 'room', 'Churrasqueira']] },
+  { id: 'pet', n: '13 · 14', nome: 'Pet play e pet wash', box: [406, 88, 460, 114], fotos: ['pet'], pg: 28, kind: 'grass', parts: [[436, 92, 456, 104, 'room', 'Pet wash']] },
+  { id: 'futmesa', n: '16', nome: 'Futmesa', box: [416, 118, 450, 149], fotos: ['futmesa'], pg: 26, kind: 'grass', parts: [[426, 128, 440, 139, 'court', 'Mesa']] },
+  { id: 'carwash', n: '15 · 17', nome: 'Car wash e vaga para carro elétrico', box: [549, 94, 580, 120], fotos: ['carwash', 'vaga-verde'], pg: 31, kind: 'deck' },
+  { id: 'minimarket', n: '19', nome: 'Mini market', box: [958, 497, 986, 523], fotos: ['minimarket'], pg: 32, kind: 'room', furn: 'gondolas' },
+  { id: 'coworking', n: '18', nome: 'Coworking', box: [962, 569, 1000, 597], fotos: ['coworking'], pg: 30, kind: 'room', furn: 'trabalho' },
+  { id: 'bicicletario', n: '33', nome: 'Bicicletário', box: [988, 546, 1007, 564], fotos: ['bicicletario'], pg: 25, kind: 'deck' },
+  { id: 'praca-refugio', n: '34 · 37', nome: 'Pergolado e praça do refúgio', box: [1458, 316, 1489, 412], fotos: [], kind: 'deck', parts: [[1463, 362, 1487, 400, 'deck', 'Pergolado']] },
+  { id: 'academia', n: '20', nome: 'Academia', box: [1618, 490, 1654, 529], fotos: ['academia-fachada', 'academia'], pg: 18, kind: 'room', furn: 'aparelhos' },
+  { id: 'lavanderia', n: '23', nome: 'Lavanderia', box: [1650, 490, 1668, 512], fotos: ['lavanderia'], pg: 32, kind: 'room', furn: 'maquinas' },
+  { id: 'brinquedoteca', n: '22', nome: 'Brinquedoteca', box: [1650, 510, 1668, 547], fotos: ['brinquedoteca'], pg: 29, kind: 'room', furn: 'mesas' },
+  { id: 'salao-jogos', n: '21', nome: 'Salão de jogos', box: [1618, 527, 1652, 574], fotos: ['salao-jogos'], pg: 26, kind: 'room', furn: 'jogos' },
+  { id: 'espaco-kids', n: '24', nome: 'Espaço kids', box: [1650, 570, 1672, 598], fotos: ['espaco-kids'], pg: 27, kind: 'grass', parts: [[1653, 574, 1668, 592, 'play', 'Brinquedos']] },
+  { id: 'quadras-areia', n: '27', nome: 'Quadras de areia', box: [1676, 356, 1851, 426], fotos: ['quadras-areia'], pg: 23, kind: 'sand',
+    parts: [[1687, 373.5, 1757, 408.5, 'sandcourt', 'Quadra 1'], [1771, 373.5, 1841, 408.5, 'sandcourt', 'Quadra 2']] },
+  { id: 'quadra-poliesportiva', n: '26', nome: 'Quadra poliesportiva', box: [1686, 503, 1814, 581], fotos: ['quadra-poliesportiva'], pg: 22, kind: 'courtbase', parts: [[1696, 512, 1804, 572, 'court', 'Quadra']] },
+  { id: 'quiosques-apoio', n: '25', nome: 'Quiosques de apoio às quadras', box: [1760, 446, 1822, 468], fotos: ['quiosques-apoio', 'quiosques-apoio-2'], pg: 24, kind: 'grass', parts: [[1764, 450, 1780, 464, 'room', 'Quiosque'], [1801, 450, 1817, 464, 'room', 'Quiosque']] },
+  { id: 'parque-aventura', n: '28', nome: 'Parque aventura', box: [1696, 426, 1752, 466], fotos: ['parque-aventura'], pg: 27, kind: 'grass', parts: [[1706, 434, 1744, 460, 'play', 'Circuito']] },
+  { id: 'academia-ar-livre', n: '29', nome: 'Academia ao ar livre', box: [1818, 576, 1854, 594], fotos: ['academia-ar-livre'], pg: 19, kind: 'deck' },
+  { id: 'lazer-02', n: '20–30', nome: 'Lazer 02 · clube esportivo', box: [1618, 341, 1865, 603], fotos: ['lazer-02', 'pista-cooper'], pg: 8, kind: 'zone', resumo: 'Academia, salão de jogos, brinquedoteca, lavanderia, quadras de areia e poliesportiva, parque aventura, academia ao ar livre e pista de cooper.' },
+  { id: 'lazer-01', n: '01–16', nome: 'Lazer 01 · clube social', box: [300, 88, 530, 603], fotos: ['lazer-01'], pg: 7, kind: 'zone', resumo: 'Portaria, salão de festas, salão infantil, varanda gourmet, piscinas, parque infantil, quiosque gourmet e espaço pet.' }
+];
+const areaBy = Object.fromEntries(AREAS.map(a => [a.id, a]));
+function areaAt(px, py) {
+  // a menor área que contém o ponto (as zonas gerais ficam por último)
+  let best = null, bestA = Infinity;
+  for (const a of AREAS) {
+    const [x0, y0, x1, y1] = a.box, m = 3;
+    if (px < x0 - m || px > x1 + m || py < y0 - m || py > y1 + m) continue;
+    const ar = (x1 - x0) * (y1 - y0);
+    if (ar < bestA) { best = a; bestA = ar; }
+  }
+  return best;
+}
+const fmtM = v => v.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+function areaPlanSVG(a) {
+  const [x0, y0, x1, y1] = a.box, wm = (x1 - x0) * S, dm = (y1 - y0) * S;
+  const VW = 360, pad = 34, k = Math.min((VW - pad * 2) / (x1 - x0), 260 / (y1 - y0));
+  const W = (x1 - x0) * k, H = (y1 - y0) * k, VH = H + pad * 2;
+  const X = x => pad + (x - x0) * k, Y = y => pad + (y - y0) * k;
+  const FILL = { room: '#f7f4ec', deck: '#ece2cf', wet: '#bfe8ee', water: '#4fb9d9', grass: '#b9cf98', sand: '#eadfc3', sandcourt: '#e3d4ad', court: '#d8437f', courtbase: '#2c6c70', play: '#f2c14e', zone: '#e9e6dc' };
+  let s = `<svg viewBox="0 0 ${VW} ${VH}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Planta esquemática: ${a.nome}, ${fmtM(wm)} por ${fmtM(dm)} metros" font-family="Manrope,sans-serif">`;
+  s += `<rect x="${pad}" y="${pad}" width="${W}" height="${H}" fill="${FILL[a.kind] || '#eee'}" stroke="#2b2b2b" stroke-width="${a.kind === 'room' ? 3 : 1.2}"/>`;
+  if (a.kind === 'room') s += `<rect x="${pad + W * 0.42}" y="${pad + H - 2}" width="${Math.min(W * 0.18, 26)}" height="4" fill="#f7f4ec"/>` + `<path d="M${pad + W * 0.42} ${pad + H} a${Math.min(W * 0.18, 26)} ${Math.min(W * 0.18, 26)} 0 0 1 ${Math.min(W * 0.18, 26)} -${Math.min(W * 0.18, 26)}" fill="none" stroke="#999" stroke-dasharray="3 2"/>`;
+  // mobiliário ilustrativo
+  const inner = (fn, nx, ny) => { for (let i = 0; i < nx; i++) for (let j = 0; j < ny; j++) s += fn(pad + W * (i + 0.5) / nx, pad + H * (j + 0.5) / ny); };
+  const f = a.furn, cell = Math.min(W, H);
+  if (f === 'mesas') inner((x, y) => `<circle cx="${x}" cy="${y}" r="${cell * 0.07}" fill="#d9c4a3" stroke="#a88a5c"/>`, Math.max(2, Math.round(W / 60)), Math.max(2, Math.round(H / 60)));
+  if (f === 'aparelhos') inner((x, y) => `<rect x="${x - cell * 0.08}" y="${y - cell * 0.04}" width="${cell * 0.16}" height="${cell * 0.08}" rx="2" fill="#555"/>`, 4, 3);
+  if (f === 'maquinas') inner((x, y) => `<rect x="${x - cell * 0.15}" y="${y - cell * 0.15}" width="${cell * 0.3}" height="${cell * 0.3}" rx="3" fill="#fff" stroke="#888"/><circle cx="${x}" cy="${y}" r="${cell * 0.09}" fill="none" stroke="#888"/>`, 1, 3);
+  if (f === 'gondolas') inner((x, y) => `<rect x="${x - W * 0.08}" y="${y - H * 0.3}" width="${W * 0.16}" height="${H * 0.6}" fill="#cfc6b6"/>`, 3, 1);
+  if (f === 'trabalho') inner((x, y) => `<rect x="${x - W * 0.35}" y="${y - H * 0.06}" width="${W * 0.7}" height="${H * 0.12}" fill="#d9c4a3"/>`, 1, 3);
+  if (f === 'jogos') inner((x, y) => `<rect x="${x - cell * 0.13}" y="${y - cell * 0.08}" width="${cell * 0.26}" height="${cell * 0.16}" rx="2" fill="#2f7a55"/>`, 2, 2);
+  if (f === 'bancada') s += `<rect x="${pad + W * 0.1}" y="${pad + H * 0.3}" width="${W * 0.8}" height="${H * 0.4}" fill="#8a5a36"/>`;
+  if (f === 'balcao') s += '';
+  for (const [a0, b0, a1, b1, kind, lab] of a.parts || []) {
+    s += `<rect x="${X(a0)}" y="${Y(b0)}" width="${(a1 - a0) * k}" height="${(b1 - b0) * k}" fill="${FILL[kind]}" stroke="${kind === 'room' ? '#2b2b2b' : '#fff'}" stroke-width="${kind === 'room' ? 2.5 : 1.5}"/>`;
+    if (kind === 'court' || kind === 'sandcourt') { const cx = X((a0 + a1) / 2); s += `<line x1="${cx}" y1="${Y(b0)}" x2="${cx}" y2="${Y(b1)}" stroke="#fff" stroke-width="1.5"/><circle cx="${cx}" cy="${Y((b0 + b1) / 2)}" r="${(b1 - b0) * k * 0.15}" fill="none" stroke="#fff" stroke-width="1.2"/>`; }
+    const tw = (a1 - a0) * k;
+    if (tw > 40) s += `<text x="${X((a0 + a1) / 2)}" y="${Y((b0 + b1) / 2) - 2}" text-anchor="middle" font-size="10" font-weight="600" fill="${kind === 'water' || kind === 'court' ? '#fff' : '#333'}">${lab}</text>` +
+      `<text x="${X((a0 + a1) / 2)}" y="${Y((b0 + b1) / 2) + 10}" text-anchor="middle" font-size="9" fill="${kind === 'water' || kind === 'court' ? '#fff' : '#555'}">${fmtM((a1 - a0) * S)} × ${fmtM((b1 - b0) * S)} m</text>`;
+  }
+  // cotas
+  s += `<g stroke="#666" stroke-width="1"><line x1="${pad}" y1="${pad - 14}" x2="${pad + W}" y2="${pad - 14}"/><line x1="${pad}" y1="${pad - 18}" x2="${pad}" y2="${pad - 10}"/><line x1="${pad + W}" y1="${pad - 18}" x2="${pad + W}" y2="${pad - 10}"/>` +
+       `<line x1="${pad - 14}" y1="${pad}" x2="${pad - 14}" y2="${pad + H}"/><line x1="${pad - 18}" y1="${pad}" x2="${pad - 10}" y2="${pad}"/><line x1="${pad - 18}" y1="${pad + H}" x2="${pad - 10}" y2="${pad + H}"/></g>`;
+  s += `<text x="${pad + W / 2}" y="${pad - 19}" text-anchor="middle" font-size="11" fill="#333">${fmtM(wm)} m</text>`;
+  s += `<text x="${pad - 19}" y="${pad + H / 2}" text-anchor="middle" font-size="11" fill="#333" transform="rotate(-90 ${pad - 19} ${pad + H / 2})">${fmtM(dm)} m</text>`;
+  if (!a.parts && a.kind === 'room') s += `<text x="${pad + W / 2}" y="${pad + 14}" text-anchor="middle" font-size="11" font-weight="600" fill="#333">${a.nome}</text>`;
+  return s + `</svg>`;
+}
+function showArea(a, keepView) {
+  selected = { kind: 'area', a };
+  $('backTxt').textContent = 'Vista geral';
+  const [x0, y0, x1, y1] = a.box, wm = (x1 - x0) * S, dm = (y1 - y0) * S;
+  const fotos = a.fotos.map(f => `<figure class="d-photo"><img src="img/areas/${f}.jpg" alt="Render do book: ${a.nome}" loading="lazy"></figure>`).join('');
+  $('drawerBody').innerHTML =
+    `<h2 class="d-title">${a.nome}</h2>` +
+    `<div class="d-sub">Área comum · item ${a.n} da implantação · cerca de ${fmtM(wm)} × ${fmtM(dm)} m (${Math.round(wm * dm)} m²)</div>` +
+    (a.resumo ? `<p class="d-note">${a.resumo} Clique num item da maquete para ver os detalhes.</p>` : '') +
+    (fotos ? `<h3 class="d-h">Como vai ficar</h3>${fotos}<p class="d-note">Render do book${a.pg ? ` (p.${a.pg})` : ''}. Imagem ilustrativa.</p>` : '') +
+    (a.kind !== 'zone' ? `<h3 class="d-h">Planta básica</h3><div class="d-plan svgplan">${areaPlanSVG(a)}</div><p class="d-note">Esquema com as medidas tiradas da implantação; o mobiliário é ilustrativo. O book não traz planta desta área.</p>` : '') +
+    `<h3 class="d-h">Na implantação</h3><div class="d-plan"><img src="img/areas/impl-${a.id}.jpg" alt="Recorte da implantação do book mostrando ${a.nome} vista de cima" loading="lazy"></div><p class="d-note">Recorte da implantação do book (p.37).</p>`;
+  if (keepView) return;
+  openDrawer(); highlight(null); syncCuts();
+  areaHL(a);
+  const r = Math.max(wm, dm);
+  flyTo(wx((x0 + x1) / 2), 0, wz((y0 + y1) / 2), THREE.MathUtils.clamp(r * 2.6, 45, 320), 0.6);
+  history.replaceState(null, '', `#area-${a.id}`);
+}
+/* contorno da área selecionada */
+const areaLine = new THREE.LineLoop(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x1f9d6b, depthTest: false }));
+areaLine.renderOrder = 6; areaLine.visible = false; scene.add(areaLine);
+function areaHL(a) {
+  if (!a) { areaLine.visible = false; return; }
+  const [x0, y0, x1, y1] = a.box;
+  areaLine.geometry.setFromPoints([[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) => new THREE.Vector3(wx(x), 0.3, wz(y))));
+  areaLine.visible = true;
 }
 
 /* ---------- Câmera ---------- */
-function flyTo(x, y, z, dist) {
+function flyTo(x, y, z, dist, elev = 0.45) { // elev: seno mínimo do ângulo de cima (1 = vista de topo)
   const target = new THREE.Vector3(x, y, z);
-  const off = camera.position.clone().sub(controls.target);
-  off.y = Math.max(off.y, off.length() * 0.45);
+  const off = camera.position.clone().sub(controls.target).normalize();
+  if (off.y < elev) { const hz = Math.hypot(off.x, off.z) || 1, c = Math.sqrt(1 - elev * elev); off.set(off.x / hz * c, elev, off.z / hz * c); }
   camGoal = { target, pos: target.clone().add(off.normalize().multiplyScalar(dist)) };
 }
-function focusUnit(un) { const f = unitFrame(un); flyTo(f.cx, (un.floor - 1) * BH, f.cz, 75); showUnit(un); }
+function focusUnit(un) { showUnit(un); }
 function focusBlock(n) { const b = blockBy[n]; flyTo(wx(b.px), 6, wz(b.py), 95); }
 
 /* ---------- Lista ---------- */
+let sortBy = 'price';
+const SORTS = { price: (a, b) => a.price - b.price, '-price': (a, b) => b.price - a.price, '-floor': (a, b) => b.floor - a.floor || a.price - b.price };
 function renderList() {
-  const rows = units.filter(matches);
-  $('listCount').textContent = `${rows.length} unidades com o filtro atual` + (rows.length > 300 ? ' (mostrando as 300 primeiras; refine o filtro)' : '');
+  const rows = units.filter(u => matches(u)).sort(SORTS[sortBy]);
+  const disp = rows.filter(u => u.status === 'Disponível').length;
+  $('listCount').textContent = `${rows.length} unidades · ${disp} disponíveis` + (rows.length > 300 ? ' — mostrando 300, use o filtro' : '');
   $('listBody').innerHTML = rows.slice(0, 300).map(un =>
-    `<button type="button" class="lrow" data-i="${units.indexOf(un)}" aria-label="Apto ${un.code}, bloco ${un.block}, ${TIPO[un.typ]}, ${un.floor}º andar, ${un.status}, ${brl(un.price)}">` +
-      `<span style="display:block"><b>Apto ${un.code}</b> <small>· Bloco ${String(un.block).padStart(2, '0')}</small><br><small>${TIPO[un.typ]} · ${un.floor}º andar${un.adapt ? ' · adaptável' : ''}</small></span>` +
-      `<span style="display:block;text-align:right"><em style="color:${STATUS_COR[un.status]}">${un.status}</em><br><small>${brl(un.price)}</small></span>` +
+    `<button type="button" class="lrow" data-i="${units.indexOf(un)}">` +
+      `<span class="code">${un.code}<em style="color:${STATUS_COR[un.status]}">${un.status}</em></span>` +
+      `<span class="info">${TIPO[un.typ]}<small>Bloco ${pad(un.block)} · ${un.floor}º andar · ${AREA[un.typ].toString().replace('.', ',')} m²${un.adapt ? ' · adaptável' : ''}</small><small>Face ${un.faces.map(x => x.dir.toLowerCase()).join(' e ')}</small></span>` +
+      `<span class="val">${brl(un.price)}</span>` +
     `</button>`
   ).join('');
 }
 $('listBody').addEventListener('click', e => {
   const row = e.target.closest('.lrow');
   if (row) focusUnit(units[+row.dataset.i]);
+});
+$('sorts').addEventListener('click', e => {
+  const c = e.target.closest('.chip'); if (!c) return;
+  sortBy = c.dataset.sort;
+  document.querySelectorAll('#sorts .chip').forEach(x => x.classList.toggle('on', x === c));
+  renderList(); $('listBody').parentElement.scrollTop = 0;
 });
 
 /* ---------- Mouse e toque ---------- */
@@ -919,17 +1387,33 @@ function castAt(e) {
   mouse.x = ((e.clientX - r.left) / r.width) * 2 - 1;
   mouse.y = -((e.clientY - r.top) / r.height) * 2 + 1;
   ray.setFromCamera(mouse, camera);
+  const plans = Object.values(planMeshes).flat().filter(m => m.visible);
+  const p = plans.length ? ray.intersectObjects(plans, false)[0] : null;
   const w = ray.intersectObject(winMesh)[0];
   const b = ray.intersectObjects(blockMeshes)[0];
-  if (w && (!b || w.distance < b.distance + 0.5)) return { un: units[winUnit[w.instanceId]] };
-  if (b) return { block: b.object.userData.block };
+  const best = Math.min(p ? p.distance : Infinity, w ? w.distance - 0.5 : Infinity, b ? b.distance : Infinity);
+  if (p && p.distance === best) return { un: units[p.object.userData.unit] };
+  if (w && w.distance - 0.5 === best) return { un: units[winUnit[w.instanceId]] };
+  if (b) {
+    // clicou na parede ou na laje: descobre o apartamento pelo ponto atingido (andar pela altura, quadrante pela posição)
+    const n = b.object.userData.block, bl = blockBy[n], pt = b.point;
+    if (b.object === blockParts[n].core) return { block: n };
+    const k = parseInt(curK[n] ?? FLOORS, 10);
+    const top = b.face && Math.abs(b.face.normal.y) > 0.5;
+    if (top && k === FLOORS) return { block: n };
+    const floor = top ? k : THREE.MathUtils.clamp(Math.floor(pt.y / BH) + 1, 1, k);
+    const q = (pt.z > wz(bl.py) ? 2 : 0) + (pt.x > wx(bl.px) ? 1 : 0);
+    return { un: unitAt(n, floor, q) };
+  }
+  const g = ray.intersectObject(ground)[0];
+  if (g) { const a = areaAt(g.point.x / S + OX, g.point.z / S + OY); if (a) return { area: a }; }
   return {};
 }
 const cv = renderer.domElement;
 cv.addEventListener('pointermove', e => {
   if (e.pointerType !== 'mouse' || e.buttons) return;
-  const un = castAt(e).un || null;
-  cv.style.cursor = un ? 'pointer' : 'grab';
+  const hit = castAt(e), un = hit.un || null;
+  cv.style.cursor = un || hit.block || hit.area ? 'pointer' : 'grab';
   if (un !== hovered) {
     hovered = un;
     if (un) highlight(un);
@@ -944,16 +1428,28 @@ cv.addEventListener('pointerup', e => { // só conta como clique/toque se não f
   const hit = castAt(e);
   if (hit.un) showUnit(hit.un);
   else if (hit.block) showBlock(hit.block);
-  else closeAll();
+  else if (hit.area) showArea(hit.area);
+  else { closeAll(); openSheet(null); }
 });
-addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (!$('sheetFilter').hidden || !$('sheetList').hidden || !$('sheetViz').hidden) openSheet(null); else closeAll();
+});
 
 refresh();
 
+/* Link direto: #31-302 (unidade) ou #bloco-31 */
+{
+  const h = location.hash.slice(1), mU = h.match(/^(\d+)-(\d+)$/), mB = h.match(/^bloco-(\d+)$/), mA = h.match(/^area-([\w-]+)$/);
+  const un = mU && units.find(u => u.block === +mU[1] && u.code === +mU[2]);
+  if (un) showUnit(un); else if (mB && blockBy[+mB[1]]) showBlock(+mB[1]); else if (mA && areaBy[mA[1]]) showArea(areaBy[mA[1]]);
+}
+
 /* ---------- Loop ---------- */
 const north = $('north');
-const NORTE = { x: -0.743, z: -0.669 }; // rosa dos ventos da implantação
+const NORTE = NORTH; // norte real (ver "Posição solar")
 const clock = new THREE.Clock();
+let lastFar = null;
 (function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.1);
@@ -963,11 +1459,35 @@ const clock = new THREE.Clock();
     controls.target.lerp(camGoal.target, k);
     if (camera.position.distanceTo(camGoal.pos) < 0.4) camGoal = null;
   }
+  if (shift !== shiftGoal) {
+    shift += (shiftGoal - shift) * (1 - Math.pow(0.002, dt));
+    if (Math.abs(shift - shiftGoal) <= 0.5) shift = shiftGoal;
+  }
+  {
+    const w = main.clientWidth, h = main.clientHeight;
+    if (shift >= 0.5) {
+      if (isMobile()) camera.setViewOffset(w, h + shift, 0, shift, w, h);
+      else camera.setViewOffset(w + shift, h, shift, 0, w, h);
+    } else if (camera.view && camera.view.enabled) {
+      camera.clearViewOffset(); camera.aspect = w / h; camera.updateProjectionMatrix();
+    }
+  }
+  waterNormal.offset.x += dt * 0.025; waterNormal.offset.y += dt * 0.012;
   controls.update();
   const fx = controls.target.x - camera.position.x, fz = controls.target.z - camera.position.z, l = Math.hypot(fx, fz) || 1;
   const ang = Math.atan2(NORTE.x * (-fz / l) + NORTE.z * (fx / l), NORTE.x * (fx / l) + NORTE.z * (fz / l));
   north.style.transform = `rotate(${ang}rad)`;
-  areaLabels.visible = main.clientWidth >= 700 || camera.position.distanceTo(controls.target) < 230;
+  { // de longe: só os nomes das avenidas; números e áreas somem para não amontoar
+    const dist = camera.position.distanceTo(controls.target), far = dist > 620;
+    const tier = far ? 2 : dist > 520 ? 1 : 0; // 0 perto: tudo · 1 médio: sem ruas menores · 2 longe: só avenidas
+    const areasOk = tier < 2 && (main.clientWidth >= 700 || dist < 230); // no celular, nomes das áreas só bem de perto
+    const key = tier + (areasOk ? 'a' : '');
+    if (key !== lastFar) {
+      lastFar = key;
+      areaLabels.children.forEach(s => { const st = s.userData.street; s.visible = st === 'major' || (st === 'minor' ? tier === 0 : areasOk); });
+      BL.forEach(b => { blockParts[b.n].label.visible = !far; });
+    }
+  }
   const cur = hovered || (selected && selected.kind === 'unit' ? selected.un : null);
   if (cur) placeTip(cur); else tip.style.display = 'none';
   renderer.render(scene, camera);
